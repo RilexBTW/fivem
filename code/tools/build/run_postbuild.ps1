@@ -21,11 +21,6 @@ if ($env:CI) {
     return
 }
 
-if ($Game -eq "ny"){
-	return
-}
-
-
 try {
 	$env:PATH += ";" + (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Yarn).InstallDir + "\bin"
 } catch {}
