@@ -34,13 +34,15 @@ static HookFunction hookFunction([] ()
 	AdjustLimit("drawbldict", 7500);
 	AdjustLimit("ptrnode_single", 230000);
 
+#if 0
+	//TODO: Fix (IDA shows 11 counts, this expects 1???)
 	{
 		// txdstore count
 		auto loc = hook::pattern("68 70 17 00 00").count(11);
 		hook::put(loc.get(1).get<void*>(1), 7500);
 		hook::put(loc.get(2).get<void*>(1), 6500);
 	}
-
+#endif
 	// placeable matrix?
 	hook::put(hook::get_pattern("68 58 1B 00 00 B9", 1), 52000);
 

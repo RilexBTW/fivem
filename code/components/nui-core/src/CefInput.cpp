@@ -761,7 +761,10 @@ static HookFunction initFunction([] ()
 
 				if (browser)
 				{
+					//TODO: Implement mouse wheel event for NY
+#ifndef GTA_NY
 					browser->GetHost()->SendMouseWheelEventNative(&m);
+#endif
 				}
 
 				suppressInput();

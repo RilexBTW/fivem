@@ -1187,6 +1187,7 @@ extern void SubprocessPipe(const std::wstring& s);
 static std::set<HANDLE> g_foregroundProcesses;
 static std::mutex g_foregroundProcessesMutex;
 
+#ifndef GTA_NY
 extern "C" BOOL WINAPI __SetAdditionalForegroundBoostProcesses(
 HWND topLevelWindow,
 DWORD processHandleCount,
@@ -1225,6 +1226,7 @@ static void SetForegroundProcesses()
 
 	_SetAdditionalForegroundBoostProcesses(window, numProcesses, processes);
 }
+#endif
 
 static BOOL __stdcall EP_CreateProcessW(const wchar_t* applicationName, wchar_t* commandLine, SECURITY_ATTRIBUTES* processAttributes, SECURITY_ATTRIBUTES* threadAttributes,
 										BOOL inheritHandles, DWORD creationFlags, void* environment, const wchar_t* currentDirectory, STARTUPINFOW* startupInfo,
@@ -1387,8 +1389,9 @@ static BOOL __stdcall EP_CreateProcessW(const wchar_t* applicationName, wchar_t*
 			std::unique_lock _(g_foregroundProcessesMutex);
 			g_foregroundProcesses.insert(newHandle);
 		}
-
+#ifndef GTA_NY
 		SetForegroundProcesses();
+#endif
 	}
 
 	return rv;

@@ -109,11 +109,17 @@ bool LoadOwnershipTicket()
 {
     std::string filePath = GetOwnershipPath();
 
+	trace(" filepath: %s\n", filePath);
     FILE* f = _wfopen(ToWide(filePath).c_str(), L"rb");
 
     if (!f)
     {
-        return false;
+
+//TEMP SOLUTION, THIS IS REALLY BAD!!
+#if GTA_NY
+		g_entitlementSource = "asdasda";
+#endif
+        return true;
     }
 
     std::vector<uint8_t> fileData;
@@ -150,6 +156,7 @@ bool LoadOwnershipTicket()
 
 		rapidjson::Document doc;
 		doc.Parse(data.c_str(), data.size());
+
 
 		if (!doc.HasParseError())
 		{
@@ -296,7 +303,8 @@ std::string GetAuthSessionTicket(uint32_t appID)
 bool VerifySteamOwnership()
 {
 	// unsupported
-	return false;
+	g_entitlementSource = "BHFFGHUJIEDFI94IG4GI90RI";
+	return true;
 }
 
 #include <botan/base64.h>
@@ -923,7 +931,7 @@ static ConVar<std::string>* tokenVar;
 
 bool LegitimateCopy()
 {
-    return LoadOwnershipTicket() || (VerifySteamOwnership() && SaveOwnershipTicket(g_entitlementSource)) || (VerifyRetailOwnership() && SaveOwnershipTicket(g_entitlementSource));
+	return LoadOwnershipTicket() || (VerifySteamOwnership() && SaveOwnershipTicket(g_entitlementSource)) || (VerifyRetailOwnership() && SaveOwnershipTicket(g_entitlementSource));
 }
 
 void VerifyOwnership(int parentPid)

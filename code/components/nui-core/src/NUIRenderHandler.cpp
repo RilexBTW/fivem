@@ -66,6 +66,7 @@ void NUIRenderHandler::OnAcceleratedPaint(CefRefPtr<CefBrowser> browser, PaintEl
 	}
 }
 
+#ifndef GTA_NY
 void NUIRenderHandler::OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, void* shared_handle, bool new_texture)
 {
 	if (m_owner->GetWindowValid())
@@ -73,6 +74,7 @@ void NUIRenderHandler::OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser, PaintE
 		m_owner->GetWindow()->UpdateSharedResource(shared_handle, -1, dirtyRects, type);
 	}
 }
+#endif
 
 void NUIRenderHandler::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer, int width, int height)
 {
