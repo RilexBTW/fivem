@@ -24,6 +24,7 @@
 	(1311)
 #elif defined(GTA_NY)
 #define GAME_BUILDS \
+	(59) \
 	(43) 
 #else
 #define GAME_BUILDS \

@@ -132,7 +132,6 @@ static bool ExecutablePreload_HandleArgs()
 		LocalFree(argv);
 		return false;
 	}
-
 	LocalFree(argv);
 
 	return true;
