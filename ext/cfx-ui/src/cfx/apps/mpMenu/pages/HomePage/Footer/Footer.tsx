@@ -21,7 +21,7 @@ export const Footer = observer(function Footer() {
           </Box>
         )}
 
-        {/*<ExtraLinkyTiles />*/}
+        <ExtraLinkyTiles />
       </Flex>
 
       <Flex repell>
