@@ -26,9 +26,7 @@ export const NavBar = observer(function NavBar() {
     return NavBarState.setNotReady;
   }, []);
 
-  const buttonTheme: ButtonTheme = NavBarState.forceTransparentNav
-    ? 'default'
-    : 'default-blurred';
+  const buttonTheme: ButtonTheme = "default";
 
   return (
     <Flex repell centered gap="large">
