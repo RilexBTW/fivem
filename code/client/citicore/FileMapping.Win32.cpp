@@ -158,6 +158,12 @@ static std::wstring MapRedirectedFilename(const wchar_t* origFileName)
 		return MakeRelativeCitPath(L"data\\game-storage\\launcher") + &wcsstr(origFileName, L"Games\\Launcher")[14];
 	}
 
+	// Program Files (x86)
+	if (wcsstr(origFileName, L"Files (x86)\\Rockstar Games\\Social Club") != nullptr || wcsstr(origFileName, g_programFilesX86Root.c_str()) != nullptr)
+	{
+		return MakeRelativeCitPath(L"data\\game-storage\\ros_2079_x86") + &wcsstr(origFileName, L"Games\\Social Club")[17];
+	}
+
 	// ProgramData
 	if (wcsstr(origFileName, L"Data\\Rockstar Games\\Launcher") != nullptr || wcsstr(origFileName, g_launcherProgramDataRoot.c_str()) != nullptr)
 	{
@@ -440,11 +446,19 @@ static BOOL WINAPI GetFileVersionInfoWStub(_In_ LPCWSTR lptstrFilename, _Reserve
 	{
 		if (StrStrIW(lptstrFilename, L"Social Club\\SocialClub") != NULL)
 		{
-			g_nextFileVersion = {2, 0, 9, 0};
+#ifdef GTA_NY
+			g_nextFileVersion = { 2, 0, 7, 9 };
+#elif
+			g_nextFileVersion = { 2, 0, 9, 0 };
+#endif
 		}
 		else if (StrStrIW(lptstrFilename, L"Social Club\\libcef.dll") != NULL)
 		{
-			g_nextFileVersion = {85, 3, 9, 0};
+#ifdef GTA_NY
+			g_nextFileVersion = { 83, 5, 0, 0 };
+#elif
+			g_nextFileVersion = { 85, 3, 9, 0 };
+#endif
 		}
 	}
 

@@ -1683,6 +1683,7 @@ void RunLauncher(const wchar_t* toolName, bool instantWait)
 	{
 		auto error = GetLastError();
 
+		//TODOLIBERTY: FAILS HERE.
 		trace("Creating %s process failed - %d\n", ToNarrow(toolName), error);
 	}
 	else

@@ -125,7 +125,11 @@ inline uintptr_t GetTriggerEP()
 	if (xbr::IsGameBuild<43>())
 	{
 		return 0xDF8F2B;
+	}
 
+	if (xbr::IsGameBuild<59>())
+	{
+		return 0xDF8F2B;
 	}
 }
 #else

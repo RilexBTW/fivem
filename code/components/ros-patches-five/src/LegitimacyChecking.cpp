@@ -109,17 +109,11 @@ bool LoadOwnershipTicket()
 {
     std::string filePath = GetOwnershipPath();
 
-	trace(" filepath: %s\n", filePath);
     FILE* f = _wfopen(ToWide(filePath).c_str(), L"rb");
 
     if (!f)
     {
-
-//TEMP SOLUTION, THIS IS REALLY BAD!!
-#if GTA_NY
-		g_entitlementSource = "asdasda";
-#endif
-        return true;
+        return false;
     }
 
     std::vector<uint8_t> fileData;
@@ -163,7 +157,6 @@ bool LoadOwnershipTicket()
 			if (doc.IsObject())
 			{
 				g_entitlementSource = doc["guid"].GetString();
-
 				if (!g_entitlementSource.empty())
 				{
 					return true;
@@ -303,8 +296,7 @@ std::string GetAuthSessionTicket(uint32_t appID)
 bool VerifySteamOwnership()
 {
 	// unsupported
-	g_entitlementSource = "BHFFGHUJIEDFI94IG4GI90RI";
-	return true;
+	return false;
 }
 
 #include <botan/base64.h>
@@ -658,6 +650,7 @@ extern std::string GetExternalSteamTicket();
 
 bool VerifyRetailOwnershipInternal(int pass)
 {
+	trace("verify ownership interla %i\n", pass);
 	std::string ticket;
 	std::string sessionKey;
 	Botan::secure_vector<uint8_t> machineHash;
@@ -872,6 +865,7 @@ bool VerifyRetailOwnershipInternal(int pass)
 		}).join();
 	}
 #else
+	trace("entitle ros2\n");
 	auto r = cpr::Post(cpr::Url{ CNL_ENDPOINT "api/validate/entitlement/ros2" },
 		cpr::Payload{
 			{ "ticket", ticket },
@@ -931,6 +925,7 @@ static ConVar<std::string>* tokenVar;
 
 bool LegitimateCopy()
 {
+	trace("legitimate copy\n");
 	return LoadOwnershipTicket() || (VerifySteamOwnership() && SaveOwnershipTicket(g_entitlementSource)) || (VerifyRetailOwnership() && SaveOwnershipTicket(g_entitlementSource));
 }
 

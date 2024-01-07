@@ -810,6 +810,7 @@ static void* CreateSimpleAllocatorHook(void* a1, void* a2, void* a3, int a4, int
 
 static void Launcher_Run(const boost::program_options::variables_map& map)
 {
+	trace("launcher run!!!");
 	// make firstrun.dat so the launcher won't error out/crash
 	{
 		CreateDirectoryW(MakeRelativeCitPath(L"data\\game-storage\\ros_launcher_appdata" ROS_SUFFIX_W).c_str(), NULL);

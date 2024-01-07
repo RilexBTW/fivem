@@ -182,9 +182,8 @@ static bool __stdcall ReadSession(void* parTree, rage::rlSessionInfo* session)
 	uint8_t sessionBlob[69];
 	size_t l = 0;
 	// .43
-	//((void(__thiscall*)(rage::rlSessionInfo*, uint8_t*, size_t, size_t*))0x6C8560)(session, sessionBlob, 69, &l);
-
-	//trace("tryna join %s\n", Botan::base64_encode(sessionBlob, l));
+	((void(__thiscall*)(rage::rlSessionInfo*, uint8_t*, size_t, size_t*))0x6C8560)(session, sessionBlob, 69, &l);
+	trace("tryna join %s\n", Botan::base64_encode(sessionBlob, l));
 
 	return true;
 }
@@ -233,6 +232,8 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 	*(uint64_t*)(0x1BB3970 + 8) = g_netLibrary->GetServerBase();
 	//*(uint64_t*)0x19F3278 = g_netLibrary->GetServerNetID();
 
+	//TODONY: .59
+
 	static auto onlineAddress = *hook::get_pattern<OnlineAddress*>("50 53 8D 44 24 24 50 68 ? ? ? ? 8D", 8);
 	onlineAddress->ip1 = onlineAddress->ip2 = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
 	onlineAddress->port1 = onlineAddress->port2 = 6672;
@@ -241,6 +242,8 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 	static auto onlineAddress2 = (OnlineAddress*)0x11103A8;
 	onlineAddress2->ip1 = onlineAddress2->ip2 = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
 	onlineAddress2->port1 = onlineAddress2->port2 = 6672;
+
+	//TODONY: .59
 
 	//memset(address, 0, sizeof(*address));
 
@@ -360,7 +363,8 @@ static bool* didPresenceStuff;
 static hook::cdecl_stub<void()> _doPresenceStuff([]()
 {
 	// .43
-	return (void*)0x6C3E60;
+	//return (void*)0x6C3E60;
+	return hook::get_pattern("53 32 DB 38 1D ? ? ? ? 75");
 });
 
 static void (*g_origSetFilterMenuOn)(void*);
