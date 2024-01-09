@@ -138,6 +138,7 @@ void VerifyOwnership(int parentPid);
 
 static void Legit_Run(const boost::program_options::variables_map& map)
 {
+	trace("legit run \n");
     auto args = map["cake"].as<std::vector<std::wstring>>();
     g_rosParentPid = map["parent_pid"].as<int>();
 

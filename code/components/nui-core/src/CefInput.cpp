@@ -736,6 +736,7 @@ static HookFunction initFunction([] ()
 			} break;
 
 			case WM_MOUSEWHEEL: {
+#if defined(CEF_ON_ACCELERATED_PAINT2)
 				int x = GET_X_LPARAM(lParam);
 				int y = GET_Y_LPARAM(lParam);
 
@@ -761,13 +762,13 @@ static HookFunction initFunction([] ()
 
 				if (browser)
 				{
-					//TODO: Implement mouse wheel event for NY
-#ifndef GTA_NY
 					browser->GetHost()->SendMouseWheelEventNative(&m);
-#endif
 				}
 
 				suppressInput();
+#else
+				inputTarget.MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam) / 120.0);
+#endif
 				break;
 			}
 			case WM_KEYUP:

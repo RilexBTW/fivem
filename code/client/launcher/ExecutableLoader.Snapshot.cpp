@@ -118,7 +118,6 @@ inline uintptr_t GetTriggerEP()
 #elif defined(GTA_NY)
 // .43
 //#define TRIGGER_EP 0xDF8F2B
-#define TRIGGER_EP (GetTriggerEP())
 
 inline uintptr_t GetTriggerEP()
 {
@@ -129,9 +128,13 @@ inline uintptr_t GetTriggerEP()
 
 	if (xbr::IsGameBuild<59>())
 	{
-		return 0xDF8F2B;
+		return 0xDF9294;
 	}
+
+	return 0x9F8F2B;
 }
+
+#define TRIGGER_EP (GetTriggerEP())
 #else
 #define TRIGGER_EP 0xDECEA5ED
 #endif

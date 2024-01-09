@@ -790,6 +790,8 @@ int RealMain()
 
 #ifdef GTA_FIVE
 		gameExecutable = ToWide(redirectionData["GTA5.exe"]);
+#elif defined(GTA_NY) 
+		gameExecutable = ToWide(redirectionData["GTAIV.exe"]);
 #endif
 	}
 #endif

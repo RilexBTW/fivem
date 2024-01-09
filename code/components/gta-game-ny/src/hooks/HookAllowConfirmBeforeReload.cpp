@@ -29,7 +29,7 @@ static HookFunction hookFunction([] ()
 
 				drawingLoadMsg = false;
 			}
-		}
+		}	
 		else
 		{
 			injectCall.call();

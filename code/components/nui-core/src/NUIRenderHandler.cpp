@@ -66,7 +66,7 @@ void NUIRenderHandler::OnAcceleratedPaint(CefRefPtr<CefBrowser> browser, PaintEl
 	}
 }
 
-#ifndef GTA_NY
+#if defined(CEF_ON_ACCELERATED_PAINT2)
 void NUIRenderHandler::OnAcceleratedPaint2(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, void* shared_handle, bool new_texture)
 {
 	if (m_owner->GetWindowValid())

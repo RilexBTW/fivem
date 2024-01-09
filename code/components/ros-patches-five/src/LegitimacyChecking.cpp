@@ -957,7 +957,7 @@ void LoadOwnershipEarly()
 	}
 }
 
-static InitFunction initFunction([]()
+/*static InitFunction initFunction([]()
 {
 	LoadOwnershipTicket();
 });
@@ -968,3 +968,5 @@ static HookFunction hookFunction([]()
 
 	tokenVar->GetHelper()->SetValue(g_entitlementSource);
 });
+
+*/

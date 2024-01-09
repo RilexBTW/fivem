@@ -204,10 +204,10 @@ void InitInputHook()
 	}
 
 	// ignore WM_ACTIVATEAPP deactivates (to fix the weird crashes)
-	hook::nop(hook::get_pattern("8B DF 8B 7D 08 85 DB", 7), 2);
+	//hook::nop(hook::get_pattern("8B DF 8B 7D 08 85 DB", 7), 2);
 
 	// disable dinput
-	hook::return_function(hook::get_pattern("8B 0D ? ? ? ? 83 EC 14 85 C9"));
+	//hook::return_function(hook::get_pattern("8B 0D ? ? ? ? 83 EC 14 85 C9"));
 
 	// some mouse stealer -- removes dinput and doesn't get toggled back (RepairInput instead fixes the mouse)
 	//hook::jump(0x623C30, RepairInput);
@@ -232,11 +232,11 @@ void InitInputHook()
 	}
 
 	// RGSC UI hook for overlay checking (on QueryInterface)
-	{
+	/*{
 		auto location = hook::get_pattern("51 FF 10 85 C0 0F 85 41 02 00 00", 1);
 		hook::nop(location, 10);
 		hook::call(location, QueryRgscUI);
-	}
+	}*/
 }
 
 fwEvent<HWND, UINT, WPARAM, LPARAM, bool&, LRESULT&> InputHook::DeprecatedOnWndProc;
