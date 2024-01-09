@@ -103,6 +103,9 @@ export class PlatformStatusService {
   };
 
   private async fetchServiceNotice() {
+    if (CurrentGameName === GameName.LibertyM) {
+      return  this.setServiceNotice(`<div class="warning">This Is A Non-Official Build Of LibertyM, Some issues may occur.</div>`);
+    }
     try {
       this.setServiceNotice(await fetcher.text(`https://runtime.fivem.net/notice_${CurrentGameName}.html`));
     } catch (e) {
@@ -128,7 +131,9 @@ export class PlatformStatusService {
 
         return (Math.floor(stat) / 1000).toFixed(1);
       });
-
+      if (currentGameNameIs(GameName.LibertyM)) {
+        return this.setStats("1", "2");
+      }
       this.setStats(current, last24h);
     } catch (e) {
       // noop
