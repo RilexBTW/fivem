@@ -1360,7 +1360,7 @@ bool IsTargetGameBuildOrGreater()
 
 std::map<std::string, std::string> UpdateGameCache()
 {
-#if defined(_M_AMD64)
+#if defined(_M_AMD64) | defined(GTA_NY)
 	std::vector<GameCacheEntry> launcherEntries;
 
 	launcherEntries = {

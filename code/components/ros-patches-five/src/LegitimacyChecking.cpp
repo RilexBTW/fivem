@@ -650,7 +650,6 @@ extern std::string GetExternalSteamTicket();
 
 bool VerifyRetailOwnershipInternal(int pass)
 {
-	trace("verify ownership interla %i\n", pass);
 	std::string ticket;
 	std::string sessionKey;
 	Botan::secure_vector<uint8_t> machineHash;
@@ -865,13 +864,12 @@ bool VerifyRetailOwnershipInternal(int pass)
 		}).join();
 	}
 #else
-	trace("entitle ros2\n");
 	auto r = cpr::Post(cpr::Url{ CNL_ENDPOINT "api/validate/entitlement/ros2" },
 		cpr::Payload{
 			{ "ticket", ticket },
 			{ "gameName",
 #ifdef GTA_NY
-				"gta4"
+				"rdr3"//"gta4" // currently CNL returns 500 when 'gta4' is passed in as gameName.
 #else
 				"rdr3"
 #endif
@@ -925,7 +923,6 @@ static ConVar<std::string>* tokenVar;
 
 bool LegitimateCopy()
 {
-	trace("legitimate copy\n");
 	return LoadOwnershipTicket() || (VerifySteamOwnership() && SaveOwnershipTicket(g_entitlementSource)) || (VerifyRetailOwnership() && SaveOwnershipTicket(g_entitlementSource));
 }
 
@@ -957,7 +954,7 @@ void LoadOwnershipEarly()
 	}
 }
 
-/*static InitFunction initFunction([]()
+static InitFunction initFunction([]()
 {
 	LoadOwnershipTicket();
 });
@@ -968,5 +965,3 @@ static HookFunction hookFunction([]()
 
 	tokenVar->GetHelper()->SetValue(g_entitlementSource);
 });
-
-*/

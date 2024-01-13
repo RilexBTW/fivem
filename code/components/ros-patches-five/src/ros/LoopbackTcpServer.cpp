@@ -30,9 +30,12 @@ struct LauncherState
 #ifdef GTA_FIVE
 #define PIPE_NAME L"\\\\.\\pipe\\GTAVLauncher_Pipe"
 #define PIPE_NAME_NARROW "\\\\.\\pipe\\GTAVLauncher_Pipe"
-#else
+#elif defined(IS_RDR3)
 #define PIPE_NAME L"\\\\.\\pipe\\RDR2Launcher_Pipe"
 #define PIPE_NAME_NARROW "\\\\.\\pipe\\RDR2Launcher_Pipe"
+#else
+#define PIPE_NAME L"\\\\.\\pipe\\GTAIVLauncher_Pipe"
+#define PIPE_NAME_NARROW "\\\\.\\pipe\\GTAIVLauncher_Pipe"
 #endif
 
 #define REMOVE_EVENT_INSTANTLY (1 << 16)
@@ -1187,7 +1190,6 @@ extern void SubprocessPipe(const std::wstring& s);
 static std::set<HANDLE> g_foregroundProcesses;
 static std::mutex g_foregroundProcessesMutex;
 
-#ifndef GTA_NY
 extern "C" BOOL WINAPI __SetAdditionalForegroundBoostProcesses(
 HWND topLevelWindow,
 DWORD processHandleCount,
@@ -1221,12 +1223,13 @@ static void SetForegroundProcesses()
 	}
 
 	// TEMP: needed as long as this is a LAF: set AppModelFeatureState flag 1 so we pass win32kfull!EditionCanSetAdditionalForegroundBoostProcesses
+#ifdef _M_AMD64
 	uint8_t* peb = (uint8_t*)__readgsqword(0x60);
 	peb[0x340] |= 1;
+#endif
 
 	_SetAdditionalForegroundBoostProcesses(window, numProcesses, processes);
 }
-#endif
 
 static BOOL __stdcall EP_CreateProcessW(const wchar_t* applicationName, wchar_t* commandLine, SECURITY_ATTRIBUTES* processAttributes, SECURITY_ATTRIBUTES* threadAttributes,
 										BOOL inheritHandles, DWORD creationFlags, void* environment, const wchar_t* currentDirectory, STARTUPINFOW* startupInfo,
@@ -1683,7 +1686,6 @@ void RunLauncher(const wchar_t* toolName, bool instantWait)
 	{
 		auto error = GetLastError();
 
-		//TODOLIBERTY: FAILS HERE.
 		trace("Creating %s process failed - %d\n", ToNarrow(toolName), error);
 	}
 	else
