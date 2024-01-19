@@ -15,6 +15,8 @@
 #define INPUT_DECL __declspec(dllexport)
 #endif
 
+#define INPUT_HOOK_HOST_CURSOR_SUPPORT
+
 namespace InputHook
 {
 	extern INPUT_DECL fwEvent<HWND, UINT, WPARAM, LPARAM, bool&, LRESULT&> DeprecatedOnWndProc;
@@ -26,4 +28,6 @@ namespace InputHook
 	INPUT_DECL void SetGameMouseFocus(bool focus);
 
 	INPUT_DECL void EnableSetCursorPos(bool enabled);
+
+	INPUT_DECL void SetHostCursorEnabled(bool enabled);
 }

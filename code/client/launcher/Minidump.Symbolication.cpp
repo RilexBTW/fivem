@@ -267,7 +267,15 @@ static nlohmann::json SymbolicateCrashRequest(HANDLE hProcess, HANDLE hThread, P
 				{ "r14", fmt::sprintf("0x%x", ctx->R14) },
 				{ "r15", fmt::sprintf("0x%x", ctx->R14) },
 #elif defined(_M_IX86)
-				// #TODOLIBERTY
+				{ "eip", fmt::sprintf("0x%x", ctx->Eip) },
+				{ "esp", fmt::sprintf("0x%x", ctx->Esp) },
+				{ "ebp", fmt::sprintf("0x%x", ctx->Ebp) },
+				{ "eax", fmt::sprintf("0x%x", ctx->Eax) },
+				{ "ebx", fmt::sprintf("0x%x", ctx->Ebx) },
+				{ "ecx", fmt::sprintf("0x%x", ctx->Ecx) },
+				{ "edx", fmt::sprintf("0x%x", ctx->Edx) },
+				{ "esi", fmt::sprintf("0x%x", ctx->Esi) },
+				{ "edi", fmt::sprintf("0x%x", ctx->Edi) },
 #endif
 			})
 		},

@@ -16,6 +16,7 @@ WNDPROC origWndProc;
 bool g_isFocused = true;
 static bool g_enableSetCursorPos = false;
 static bool g_isFocusStolen = false;
+static bool g_useHostCursor;
 
 static void(*disableFocus)();
 
@@ -56,6 +57,85 @@ void InputHook::SetGameMouseFocus(bool focus)
 void InputHook::EnableSetCursorPos(bool enabled) {
 	g_enableSetCursorPos = enabled;
 }
+void EnableHostCursor()
+{
+	while (ShowCursor(TRUE) < 0)
+	  ;
+}
+
+void DisableHostCursor()
+{
+	while (ShowCursor(FALSE) >= 0)
+	  ;
+}
+
+void InputHook::SetHostCursorEnabled(bool enabled)
+{
+	static bool lastEnabled = false;
+
+	if (!lastEnabled && enabled)
+	{
+		EnableHostCursor();
+	}
+	else if (lastEnabled && !enabled)
+	{
+		DisableHostCursor();
+	}
+
+	g_useHostCursor = enabled;
+}
+
+BOOL WINAPI ClipCursorWrap(const RECT* lpRekt)
+{
+	static RECT lastRect;
+	static RECT* lastRectPtr;
+
+	if ((lpRekt && !lastRectPtr) ||
+		(lastRectPtr && !lpRekt) ||
+		!EqualRect(&lastRect, lpRekt))
+	{
+		// update last rect
+		if (lpRekt)
+		{
+			lastRect = *lpRekt;
+			lastRectPtr = &lastRect;
+		}
+		else
+		{
+			memset(&lastRect, 0xCC, 0);
+			lastRectPtr = nullptr;
+		}
+
+		return ClipCursor(lpRekt);
+	}
+
+	return TRUE;
+}
+
+HKL WINAPI ActivateKeyboardLayoutWrap(IN HKL hkl, IN UINT flags)
+{
+	return hkl;
+}
+
+static INT HookShowCursor(BOOL show)
+{
+	if (g_useHostCursor)
+	{
+		return (show) ? 0 : -1;
+	}
+
+	return ShowCursor(show);
+}
+
+BOOL WINAPI SetCursorPosWrap(int X, int Y)
+{
+	if (!g_isFocused || g_enableSetCursorPos)
+	{
+		return SetCursorPos(X, Y);
+	}
+
+	return TRUE;
+}
 
 LRESULT APIENTRY grcWindowProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -63,14 +143,10 @@ LRESULT APIENTRY grcWindowProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		g_isFocused = (wParam) ? true : false;
 
-		/*if (g_isFocused)
+		if (!g_isFocused)
 		{
-			*(BYTE*)(0x1970A21) &= ~1;
+
 		}
-		else
-		{
-			*(BYTE*)(0x1970A21) |= 1;
-		}*/
 	}
 
 	if (uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST)
@@ -85,6 +161,12 @@ LRESULT APIENTRY grcWindowProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	LRESULT lresult;
 
 	InputHook::DeprecatedOnWndProc(hwnd, uMsg, wParam, lParam, pass, lresult);
+
+	if (uMsg == WM_PARENTNOTIFY)
+	{
+		pass = false;
+		lresult = DefWindowProc(hwnd, uMsg, wParam, lParam);
+	}
 
 	if (!pass)
 	{
@@ -204,10 +286,10 @@ void InitInputHook()
 	}
 
 	// ignore WM_ACTIVATEAPP deactivates (to fix the weird crashes)
-	//hook::nop(hook::get_pattern("8B DF 8B 7D 08 85 DB", 7), 2);
+	hook::nop(hook::get_pattern("8B DF 8B 7D 08 85 DB", 7), 2);
 
 	// disable dinput
-	//hook::return_function(hook::get_pattern("8B 0D ? ? ? ? 83 EC 14 85 C9"));
+	hook::return_function(hook::get_pattern("8B 0D ? ? ? ? 83 EC 14 85 C9"));
 
 	// some mouse stealer -- removes dinput and doesn't get toggled back (RepairInput instead fixes the mouse)
 	//hook::jump(0x623C30, RepairInput);
@@ -215,6 +297,14 @@ void InitInputHook()
 	MH_Initialize();
 	MH_CreateHook(hook::get_pattern("83 3D ? ? ? ? 00 74 7D 80 3D ? ? ? ? 00"), LockMouseDeviceHook, (void**)&g_origLockMouseDevice);
 	MH_EnableHook(MH_ALL_HOOKS);
+
+	// fix repeated ClipCursor calls (causing DWM load)
+	hook::iat("user32.dll", ClipCursorWrap, "ClipCursor");
+	hook::iat("user32.dll", ActivateKeyboardLayoutWrap, "ActiveKeyboardLayout");
+	// don't allow SetCursorPos during focus
+	hook::iat("user32.dll", SetCursorPosWrap, "SetCursorPos");
+	// NUI OS cursors
+	hook::iat("user32.dll", HookShowCursor, "HookShowCursor");
 
 	{
 		auto location = hook::get_pattern<char>("50 FF 15 ? ? ? ? 5F 5E 5B C3");
@@ -232,11 +322,11 @@ void InitInputHook()
 	}
 
 	// RGSC UI hook for overlay checking (on QueryInterface)
-	/*{
+	{
 		auto location = hook::get_pattern("51 FF 10 85 C0 0F 85 41 02 00 00", 1);
 		hook::nop(location, 10);
 		hook::call(location, QueryRgscUI);
-	}*/
+	}
 }
 
 fwEvent<HWND, UINT, WPARAM, LPARAM, bool&, LRESULT&> InputHook::DeprecatedOnWndProc;
