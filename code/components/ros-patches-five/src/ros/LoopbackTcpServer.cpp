@@ -30,9 +30,12 @@ struct LauncherState
 #ifdef GTA_FIVE
 #define PIPE_NAME L"\\\\.\\pipe\\GTAVLauncher_Pipe"
 #define PIPE_NAME_NARROW "\\\\.\\pipe\\GTAVLauncher_Pipe"
-#else
+#elif defined(IS_RDR3)
 #define PIPE_NAME L"\\\\.\\pipe\\RDR2Launcher_Pipe"
 #define PIPE_NAME_NARROW "\\\\.\\pipe\\RDR2Launcher_Pipe"
+#else
+#define PIPE_NAME L"\\\\.\\pipe\\GTAIVLauncher_Pipe"
+#define PIPE_NAME_NARROW "\\\\.\\pipe\\GTAIVLauncher_Pipe"
 #endif
 
 #define REMOVE_EVENT_INSTANTLY (1 << 16)
@@ -1220,8 +1223,10 @@ static void SetForegroundProcesses()
 	}
 
 	// TEMP: needed as long as this is a LAF: set AppModelFeatureState flag 1 so we pass win32kfull!EditionCanSetAdditionalForegroundBoostProcesses
+#ifdef _M_AMD64
 	uint8_t* peb = (uint8_t*)__readgsqword(0x60);
 	peb[0x340] |= 1;
+#endif
 
 	_SetAdditionalForegroundBoostProcesses(window, numProcesses, processes);
 }
@@ -1387,8 +1392,9 @@ static BOOL __stdcall EP_CreateProcessW(const wchar_t* applicationName, wchar_t*
 			std::unique_lock _(g_foregroundProcessesMutex);
 			g_foregroundProcesses.insert(newHandle);
 		}
-
+#ifndef GTA_NY
 		SetForegroundProcesses();
+#endif
 	}
 
 	return rv;

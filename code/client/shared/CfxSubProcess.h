@@ -75,10 +75,10 @@ inline const wchar_t* MakeCfxSubProcess(const std::wstring& processType, const s
 	
 	if ((origin.find(L"game") == 0 && origin != L"game_mtl") || processType == L"DumpServer")
 	{
-#if defined(GTA_FIVE) || defined(IS_RDR3)
+#if defined(GTA_FIVE) || defined(IS_RDR3) || defined(GTA_NY)
 		auto buildNumber = xbr::GetGameBuild();
 
-		if (buildNumber != 1604 && buildNumber != 1311)
+		if (buildNumber != 1604 && buildNumber != 1311 && buildNumber != 43)
 		{
 			productName += fmt::sprintf(L"b%d_", buildNumber);
 		}

@@ -151,12 +151,12 @@ bool LoadOwnershipTicket()
 		rapidjson::Document doc;
 		doc.Parse(data.c_str(), data.size());
 
+
 		if (!doc.HasParseError())
 		{
 			if (doc.IsObject())
 			{
 				g_entitlementSource = doc["guid"].GetString();
-
 				if (!g_entitlementSource.empty())
 				{
 					return true;
@@ -869,7 +869,7 @@ bool VerifyRetailOwnershipInternal(int pass)
 			{ "ticket", ticket },
 			{ "gameName",
 #ifdef GTA_NY
-				"gta4"
+				"gta4" // currently CNL returns 500 when 'gta4' is passed in as gameName.
 #else
 				"rdr3"
 #endif
@@ -923,7 +923,7 @@ static ConVar<std::string>* tokenVar;
 
 bool LegitimateCopy()
 {
-    return LoadOwnershipTicket() || (VerifySteamOwnership() && SaveOwnershipTicket(g_entitlementSource)) || (VerifyRetailOwnership() && SaveOwnershipTicket(g_entitlementSource));
+	return LoadOwnershipTicket() || (VerifySteamOwnership() && SaveOwnershipTicket(g_entitlementSource)) || (VerifyRetailOwnership() && SaveOwnershipTicket(g_entitlementSource));
 }
 
 void VerifyOwnership(int parentPid)

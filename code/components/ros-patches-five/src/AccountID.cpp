@@ -1014,7 +1014,7 @@ void ValidateSteam(int parentPid)
 
 static bool InitAccountMTL()
 {
-#if defined(_M_AMD64)
+#if defined(_M_AMD64) | defined(GTA_NY)
 	auto pids = GetMTLPids();
 
 	if (pids.empty())

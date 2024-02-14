@@ -158,6 +158,12 @@ static std::wstring MapRedirectedFilename(const wchar_t* origFileName)
 		return MakeRelativeCitPath(L"data\\game-storage\\launcher") + &wcsstr(origFileName, L"Games\\Launcher")[14];
 	}
 
+	// Program Files (x86)
+	if (wcsstr(origFileName, L"Files (x86)\\Rockstar Games\\Social Club") != nullptr || wcsstr(origFileName, g_programFilesX86Root.c_str()) != nullptr)
+	{
+		return MakeRelativeCitPath(L"data\\game-storage\\ros_2079_x86") + &wcsstr(origFileName, L"Games\\Social Club")[17];
+	}
+
 	// ProgramData
 	if (wcsstr(origFileName, L"Data\\Rockstar Games\\Launcher") != nullptr || wcsstr(origFileName, g_launcherProgramDataRoot.c_str()) != nullptr)
 	{
@@ -440,11 +446,19 @@ static BOOL WINAPI GetFileVersionInfoWStub(_In_ LPCWSTR lptstrFilename, _Reserve
 	{
 		if (StrStrIW(lptstrFilename, L"Social Club\\SocialClub") != NULL)
 		{
-			g_nextFileVersion = {2, 0, 9, 0};
+#ifdef GTA_NY
+			g_nextFileVersion = { 2, 0, 7, 9 };
+#elif
+			g_nextFileVersion = { 2, 0, 9, 0 };
+#endif
 		}
 		else if (StrStrIW(lptstrFilename, L"Social Club\\libcef.dll") != NULL)
 		{
-			g_nextFileVersion = {85, 3, 9, 0};
+#ifdef GTA_NY
+			g_nextFileVersion = { 83, 5, 0, 0 };
+#elif
+			g_nextFileVersion = { 85, 3, 9, 0 };
+#endif
 		}
 	}
 
@@ -644,6 +658,8 @@ NTSTATUS NTAPI LdrLoadDllStub(const wchar_t* fileName, uint32_t* flags, UNICODE_
 		// VulkanRT loader, we don't use Vulkan, CEF does (to 'collect info'), and this crashes a lot of Vulkan drivers
 		(moduleNameStr.find(L"vulkan-1.dll") != std::string::npos && getenv("CitizenFX_ToolMode")) ||
 #endif
+		// omen gaming hub (HP's software) - it crashes everyone that has this software installed for unknown reasons
+		moduleNameStr.find(L"omen_camera_x64.dll") != std::string::npos ||
 		false
 	)
 	{

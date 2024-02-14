@@ -1360,7 +1360,7 @@ bool IsTargetGameBuildOrGreater()
 
 std::map<std::string, std::string> UpdateGameCache()
 {
-#if defined(_M_AMD64)
+#if defined(_M_AMD64) | defined(GTA_NY)
 	std::vector<GameCacheEntry> launcherEntries;
 
 	launcherEntries = {
@@ -1787,6 +1787,16 @@ std::map<std::string, std::string> UpdateGameCache()
 	if (IsTargetGameBuild<1436>() || IsTargetGameBuild<1491>())
 	{
 		g_requiredEntries.push_back({ "x64/dlcpacks/mp009/dlc.rpf", "7ae2012968709d6d1079c88ee40369f4359778bf", "nope:https://runtime.fivem.net/patches/dlcpacks/patchday4ng/dlc.rpfmpbiker/dlc.rpf", 494360763 });
+	}
+#elif GTA_NY
+	// 43 -> 59 did not modify any content aside from the executeable
+	if (IsTargetGameBuild<59>())
+	{
+		g_requiredEntries.push_back({ "GTAIV.exe", "29ecbf08dd50263a7d5e36706b3927e10c7aa36d", "https://i.txnrp.com/mirrors/patches_libertym/59/GTAIV.exe", 17425752 });
+	}
+	else
+	{
+		g_requiredEntries.push_back({ "GTAIV.exe", "5954e74a00d84756a9cdd1ba01afdb09679187c8", "https://i.txnrp.com/mirrors/patches_libertym/43/GTAIV.exe", 17422976 });
 	}
 #endif
 

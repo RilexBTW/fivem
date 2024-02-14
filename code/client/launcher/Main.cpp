@@ -605,8 +605,9 @@ int RealMain()
 #ifndef LAUNCHER_PERSONALITY_CHROME
 	LoadLibrary(MakeRelativeCitPath(L"botan.dll").c_str());
 	LoadLibrary(MakeRelativeCitPath(L"dinput8.dll").c_str());
+#ifndef GTA_NY
 	LoadLibrary(MakeRelativeCitPath(L"steam_api64.dll").c_str());
-
+#endif
 	// laod V8 DLLs in case end users have these in a 'weird' directory
 	LoadLibrary(MakeRelativeCitPath(L"bin/icuuc.dll").c_str());
 	LoadLibrary(MakeRelativeCitPath(L"bin/icui18n.dll").c_str());
@@ -790,6 +791,8 @@ int RealMain()
 
 #ifdef GTA_FIVE
 		gameExecutable = ToWide(redirectionData["GTA5.exe"]);
+#elif defined(GTA_NY) 
+		gameExecutable = ToWide(redirectionData["GTAIV.exe"]);
 #endif
 	}
 #endif

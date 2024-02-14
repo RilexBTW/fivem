@@ -1,7 +1,6 @@
 #include "StdInc.h"
 #include "ExecutableLoader.h"
 
-#ifdef LAUNCHER_PERSONALITY_GAME
 #include "Hooking.h"
 
 #include <shellapi.h>
@@ -54,7 +53,11 @@ static bool LoadExecutable(const wchar_t* executablePath, void** entryPointOut =
 	
 	// load the executable
 	ExecutableLoader exeLoader(data.data());
+#if defined(GTA_NY)
+	exeLoader.SetLoadLimit(0x1BE8000 + 0x400000);
+#else
 	exeLoader.SetLoadLimit(0x140000000 + 0x60000000);
+#endif
 	exeLoader.SetLibraryLoader([](const char* libName)
 	{
 		auto hMod = LoadLibraryA(libName);
@@ -132,20 +135,17 @@ static bool ExecutablePreload_HandleArgs()
 		LocalFree(argv);
 		return false;
 	}
-
 	LocalFree(argv);
 
 	return true;
 }
-
+#ifdef LAUNCHER_PERSONALITY_GAME
 bool ExecutablePreload_Init()
 {
 	if (!ExecutablePreload_HandleArgs())
 	{
 		return false;
 	}
-
-	
 
 	return true;
 }

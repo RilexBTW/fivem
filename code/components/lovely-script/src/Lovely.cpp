@@ -7,7 +7,6 @@
 
 #include "StdInc.h"
 
-#ifndef GTA_NY
 #include <scrEngine.h>
 
 #include <NetLibrary.h>
@@ -23,6 +22,8 @@
 // BLIP_8 in global.gxt2 -> 'Waypoint'
 #define BLIP_WAYPOINT 8
 
+
+#ifndef GTA_NY
 #include <SteamComponentAPI.h>
 
 inline ISteamComponent* GetSteam()
@@ -37,6 +38,8 @@ inline ISteamComponent* GetSteam()
 
 	return steamComponent;
 }
+
+#endif
 
 class LovelyThread : public GtaThread
 {
@@ -152,31 +155,35 @@ public:
 		uint32_t playerPedId = NativeInvoke::Invoke<0xD80958FC74E988A6, uint32_t>();
 #elif defined(IS_RDR3)
 		uint32_t playerPedId = NativeInvoke::Invoke<0x096275889B8E0EE0, uint32_t>();
+#elif defined(GTA_NY)
+		uint32_t playerPedId = NativeInvoke::Invoke<0x511454A9, uint32_t>(NativeInvoke::Invoke<0x62E319C6, uint32_t>());
 #endif
 
 		auto setPresenceTemplate = [](std::string_view value)
 		{
-			static auto steam = GetSteam();
 			std::string valueStr{ value };
+#ifndef GTA_NY
+			static auto steam = GetSteam();
 
 			if (steam)
 			{
 				steam->SetRichPresenceTemplate(valueStr);
 			}
-
+#endif
 			OnRichPresenceSetTemplate(valueStr);
 		};
 
 		auto setPresenceValue = [](int idx, std::string_view value)
 		{
-			static auto steam = GetSteam();
 			std::string valueStr{ value };
+#ifndef GTA_NY
+			static auto steam = GetSteam();
 
 			if (steam)
 			{
 				steam->SetRichPresenceValue(idx, valueStr);
 			}
-
+#endif
 			OnRichPresenceSetValue(idx, valueStr);
 		};
 
@@ -216,6 +223,8 @@ public:
 			else
 #elif defined(IS_RDR3)
 			if (NativeInvoke::Invoke<0x9DE624D2FC4B603F, bool>())
+#elif defined(GTA_NY)
+			if (NativeInvoke::Invoke<0x65B83AFB, bool>())
 #endif
 			{
 				int playerCount = 0;
@@ -223,7 +232,11 @@ public:
 				for (int i = 0; i < 256; i++)
 				{
 					// NETWORK_IS_PLAYER_ACTIVE
+#ifndef GTA_NY
 					if (NativeInvoke::Invoke<0xB8DFD30D6973E135, bool>(i))
+#else
+					if (NativeInvoke::Invoke<0x4E237943, bool>(i))
+#endif
 					{
 						++playerCount;
 					}
@@ -262,4 +275,3 @@ static InitFunction initFunction([] ()
 		rage::scrEngine::CreateThread(&lovelyThread);
 	});
 });
-#endif

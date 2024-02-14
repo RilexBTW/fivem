@@ -14,6 +14,10 @@
 
 #include <udis86.h>
 
+#ifdef GTA_NY
+#include <winternl.h>
+#endif
+
 static void* FindCallFromAddress(void* methodPtr, ud_mnemonic_code mnemonic = UD_Icall, bool breakOnFirst = false)
 {
 	// return value holder

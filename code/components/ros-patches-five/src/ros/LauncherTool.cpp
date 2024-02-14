@@ -810,6 +810,7 @@ static void* CreateSimpleAllocatorHook(void* a1, void* a2, void* a3, int a4, int
 
 static void Launcher_Run(const boost::program_options::variables_map& map)
 {
+	trace("launcher run!!!");
 	// make firstrun.dat so the launcher won't error out/crash
 	{
 		CreateDirectoryW(MakeRelativeCitPath(L"data\\game-storage\\ros_launcher_appdata" ROS_SUFFIX_W).c_str(), NULL);
@@ -973,12 +974,10 @@ void Component_RunPreInit()
 
 	if (!hostData->IsMasterProcess())
 	{
-#ifndef GTA_NY
 		if (hostData->IsGameProcess())
 		{
 			RunLauncherAwait();
 		}
-#endif
 
 		return;
 	}
@@ -1002,9 +1001,8 @@ void Component_RunPreInit()
 				TerminateProcess(GetCurrentProcess(), 0x8000DEAD);
 			}
 
-#ifndef GTA_NY
 			RunLauncher(L"ros:launcher", false);
-#endif
+
 		}
 
 		if (!LoadOwnershipTicket())

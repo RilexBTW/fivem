@@ -7,6 +7,7 @@
 #include <CoreConsole.h>
 #include <CoreNetworking.h>
 #include <NetLibrary.h>
+#include <CrossBuildRuntime.h>
 
 #include <nutsnbolts.h>
 
@@ -183,7 +184,6 @@ static bool __stdcall ReadSession(void* parTree, rage::rlSessionInfo* session)
 	size_t l = 0;
 	// .43
 	//((void(__thiscall*)(rage::rlSessionInfo*, uint8_t*, size_t, size_t*))0x6C8560)(session, sessionBlob, 69, &l);
-
 	//trace("tryna join %s\n", Botan::base64_encode(sessionBlob, l));
 
 	return true;
@@ -226,7 +226,7 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 
 	return success;*/
 
-	// .43
+	// .43 & .59
 	* (uint8_t*)0x18B82CC = 1;
 	*(uint32_t*)0x18B82D0 = g_netLibrary->GetServerBase() ^ 0xABCD;
 	*(uint64_t*)0x1BB3970 = g_netLibrary->GetServerBase();
@@ -238,9 +238,20 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 	onlineAddress->port1 = onlineAddress->port2 = 6672;
 
 	// .43
-	static auto onlineAddress2 = (OnlineAddress*)0x11103A8;
-	onlineAddress2->ip1 = onlineAddress2->ip2 = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
-	onlineAddress2->port1 = onlineAddress2->port2 = 6672;
+	if (xbr::IsGameBuildOrGreater<59>())
+	{
+		static auto onlineAddress2 = (OnlineAddress*)0x11103A0;
+		onlineAddress2->ip1 = onlineAddress2->ip2 = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
+		onlineAddress2->port1 = onlineAddress2->port2 = 6672;
+	}
+	else
+	{
+		static auto onlineAddress2 = (OnlineAddress*)0x11103A8;
+		onlineAddress2->ip1 = onlineAddress2->ip2 = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
+		onlineAddress2->port1 = onlineAddress2->port2 = 6672;
+	}
+
+	//TODONY: .59
 
 	//memset(address, 0, sizeof(*address));
 
@@ -329,6 +340,7 @@ void SocketInitHook()
 	g_origSocketInit();
 }
 
+//IS_THIS_MACHINE_THE_SERVER
 static hook::cdecl_stub<bool()> isNetworkHost([]()
 {
 	return hook::get_call(*hook::get_pattern<void*>("68 00 16 5E 2E", -4));
@@ -360,7 +372,8 @@ static bool* didPresenceStuff;
 static hook::cdecl_stub<void()> _doPresenceStuff([]()
 {
 	// .43
-	return (void*)0x6C3E60;
+	//return (void*)0x6C3E60;
+	return hook::get_pattern("53 32 DB 38 1D ? ? ? ? 75");
 });
 
 static void (*g_origSetFilterMenuOn)(void*);

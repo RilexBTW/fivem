@@ -2,6 +2,7 @@
 
 class CommandLineOption;
 
+static RECT g_curRect;
 static CommandLineOption** g_curOption; //= *(CommandLineOption**)0x184A244;
 
 class CommandLineOption
@@ -87,9 +88,36 @@ static HWND WINAPI CreateWindowExACustom(DWORD dwExStyle, LPCSTR lpClassName, LP
 	return CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 }
 
+static bool WINAPI SetRectCustom(LPRECT lprc, int xLeft, int yTop, int xRight, int yBottom)
+{
+	g_curRect = { xLeft, yTop, xRight, yBottom };
+	return SetRect(lprc, xLeft, yTop, xRight, yBottom);
+}
+
+static bool WINAPI MoveWindowCustom(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
+{
+	RECT rect = { X, Y, nWidth, nHeight };
+	MONITORINFO info;
+	HMONITOR monitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	info.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(monitor, &info);
+	float DesktopResW = info.rcMonitor.right - info.rcMonitor.left;
+	float DesktopResH = info.rcMonitor.bottom - info.rcMonitor.top;
+	if ((rect.right - rect.left >= DesktopResW) || (rect.bottom - rect.top >= DesktopResH))
+	{
+		rect = g_curRect;
+	}
+	rect.left = (LONG)((DesktopResW / 2.0f) - (rect.right / 2.0f));
+	rect.top = (LONG)((DesktopResH / 2.0f) - (rect.bottom / 2.0f));
+	return MoveWindow(hWnd, rect.left, rect.top, rect.right, rect.bottom, bRepaint);
+}
+
 static HookFunction windowInit([] ()
 {
 	hook::iat("user32.dll", CreateWindowExACustom, "CreateWindowExA");
+	hook::iat("user32.dll", CreateWindowExWCustom, "CreateWindowExW");
+	hook::iat("user32.dll", MoveWindowCustom, "MoveWindow");
+	hook::iat("user32.dll", SetRectCustom, "SetRect");
 
 	// 1.2.0.30: "8A 44 24 0C 88 41 10", 8
 	g_curOption = *hook::get_pattern<CommandLineOption**>("8B 44 24 10 89 41 04 A1", 8);

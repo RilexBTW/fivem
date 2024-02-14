@@ -15,6 +15,9 @@
 #elif defined(IS_RDR3)
 #define DEFAULT_APP_ID "879627773839278110"
 #define DEFAULT_APP_ASSET "redm_large"
+#elif defined(GTA_NY)
+#define DEFAULT_APP_ID ""
+#define DEFAULT_APP_ASSET "libertym_large"
 #endif
 
 #if defined(DEFAULT_APP_ID)

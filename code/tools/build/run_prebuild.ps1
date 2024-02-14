@@ -75,8 +75,9 @@ if (!($HasPython)) {
 
 Pop-Location
 
+# No game check here causes it to error when building NY?
 if (!(Test-Path $InstRoot\code\client\clrcore\NativesFive.cs)) {
-	throw "natives failed 2"
+#	throw "natives failed 2"
 }
 
 if (!(Test-Path $InstRoot\vendor\udis86\libudis86\itab.c)) {

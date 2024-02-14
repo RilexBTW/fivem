@@ -73,7 +73,11 @@ static InitFunction initFunction([]()
 					ImGui::NextColumn();
 					ImGui::Text("%s", entry.eventName.c_str());
 					ImGui::NextColumn();
+#ifdef GTA_NY
+					ImGui::Text("%ld B", entry.payloadSize);
+#else
 					ImGui::Text("%lld B", entry.payloadSize);
+#endif
 					ImGui::NextColumn();
 				}
 			}

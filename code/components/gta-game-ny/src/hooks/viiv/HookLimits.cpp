@@ -1,4 +1,5 @@
 #include "StdInc.h"
+#include <CrossBuildRuntime.h>
 
 void AdjustLimit(std::string limit, int value)
 {
@@ -36,9 +37,18 @@ static HookFunction hookFunction([] ()
 
 	{
 		// txdstore count
-		auto loc = hook::pattern("68 70 17 00 00").count(11);
-		hook::put(loc.get(1).get<void*>(1), 7500);
-		hook::put(loc.get(2).get<void*>(1), 6500);
+		auto loc = hook::pattern("68 70 17 00 ?").count(11);
+		
+		if (xbr::IsGameBuildOrGreater<59>())
+		{
+			hook::put(loc.get(0).get<void*>(1), 7500);
+			hook::put(loc.get(1).get<void*>(1), 6500);
+		}
+		else
+		{
+			hook::put(loc.get(1).get<void*>(1), 7500);
+			hook::put(loc.get(2).get<void*>(1), 6500);
+		}
 	}
 
 	// placeable matrix?

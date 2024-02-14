@@ -25,7 +25,7 @@ const statusIcons = {
 export const PlatformStats = observer(function PlatformStats() {
   const PlatformStatusService = usePlatformStatusService();
 
-  const showStatusButton = PlatformStatusService.level > StatusLevel.Unavailable && CurrentGameName !== GameName.RedM;
+  const showStatusButton = false;
 
   return (
     <Flex>

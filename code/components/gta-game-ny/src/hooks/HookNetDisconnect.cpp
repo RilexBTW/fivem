@@ -20,7 +20,7 @@ static void FinalizeDisconnect()
 		if (gameInit->TryDisconnect())
 		{
 			// #TODOLIBERTY: ?
-			//g_netLibrary->FinalizeDisconnect();
+			g_netLibrary->Disconnect();
 		}
 	}
 }

@@ -445,8 +445,10 @@ public:
 					{
 #ifdef GTA_FIVE
 						cb(va("The Social Club account specified does not own a valid license to Grand Theft Auto V."), "");
-#else
+#elseif defined(IS_RDR3)
 						cb(va("The Social Club account specified does not own a valid license to Red Dead Redemption 2."), "");
+#else
+						cb(va("The Social Club account specified does not own a valid license to Grand Theft Auto IV."), "");
 #endif
 					}
 					else

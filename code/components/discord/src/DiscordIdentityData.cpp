@@ -1,6 +1,6 @@
 #include <StdInc.h>
 
-#if defined(GTA_FIVE) || defined(IS_RDR3)
+#if defined(GTA_FIVE) || defined(IS_RDR3) || defined(GTA_NY)
 #include "CnlEndpoint.h"
 
 #include <LegitimacyAPI.h>
