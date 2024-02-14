@@ -31,7 +31,11 @@ void EndpointMapper::AddGameService(const std::string& serviceName, const TGameS
 
 bool EndpointMapper::HandleRequest(fwRefContainer<net::HttpRequest> request, fwRefContainer<net::HttpResponse> response)
 {
+#ifdef GTA_NY
+	trace("%s: %s %s\n", __FUNCTION__, request->GetRequestMethod().c_str(), request->GetPath().c_str());
+#elif
 	console::DPrintf("ros", __FUNCTION__ ": %s %s\n", request->GetRequestMethod().c_str(), request->GetPath().c_str());
+#endif
 
 	for (auto& prefixEntry : m_prefixes)
 	{
@@ -93,6 +97,7 @@ static InitFunction initFunction([] ()
 			"prs-gta4-prod.ros.rockstargames.com",
 			"gta4-prod.ros.rockstargames.com",
 			"auth-gta4-prod.ros.rockstargames.com",
+			"cs-gta4-prod.ros.rockstargames.com",
 #ifdef IS_RDR3
 			"crews-rdr2-prod.ros.rockstargames.com",
 			"prs-rdr2-prod.ros.rockstargames.com",

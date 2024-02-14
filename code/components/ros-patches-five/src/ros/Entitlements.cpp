@@ -338,8 +338,6 @@ static InitFunction initFunction([] ()
 
 	mapper->AddGameService("Presence.asmx/Query", [](const std::string& body)
 	{
-		trace("query: %s\n", body);
-
 		return R"(<?xml version="1.0" encoding="utf-8"?><Response><Status>0</Status></Response>)";
 	});
 
@@ -1061,6 +1059,7 @@ mapper->AddGameService("ugc.asmx/Publish", [](const std::string& body)
 
 	mapper->AddGameService("app.asmx/GetDefaultApps", [](const std::string& body)
 	{
+
 		return R"(<?xml version="1.0" encoding="utf-8"?>
 <Response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ms="0" xmlns="GetDefaultApps">
   <Status>1</Status>
@@ -1211,7 +1210,6 @@ mapper->AddGameService("ugc.asmx/Publish", [](const std::string& body)
 		fiveBuildsToVersions[xbr::GetGameBuild()],
 		rdrBuildsToVersions[xbr::GetGameBuild()]);
 	});
-
 
 	/*mapper->AddGameService("Telemetry.asmx/SubmitCompressed", [](const std::string& body)
 	{
