@@ -429,7 +429,7 @@ void CitizenGame::Launch(const std::wstring& gamePath, bool isMainGame)
 	{
 		ExitProcess(0);
 	}
-	
+
 	// call into the launcher code
 	if (!launcher->PreLoadGame(sandboxInfo))
 	{

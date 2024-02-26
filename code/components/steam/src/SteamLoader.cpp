@@ -77,22 +77,33 @@ void SteamLoader::Initialize()
 		SetEnvironmentVariable(L"PATH", pathBuffer);
 
 		// oh you wanted this to work on old win7? ehhh
-		AddDllDirectory(steamDirectory.c_str());
+		//AddDllDirectory(steamDirectory.c_str());
 
 		// load steamclient*.dll
 		m_hSteamClient = LoadLibrary(steamDllPath.c_str());
-
-		// load and pin crashhandler64.dll (as it seems to be loaded at-will by Steam and then unloaded/breaks on a few systems)
+		// load and pin crashhandler(64).dll (as it seems to be loaded at-will by Steam and then unloaded/breaks on a few systems)
+#if GTA_NY
+		HMODULE steamCH = LoadLibraryW(L"crashhandler.dll");
+#else
 		HMODULE steamCH = LoadLibraryW(L"crashhandler64.dll");
+#endif
 
 		if (steamCH)
 		{
 			HMODULE steamCH_pin;
+#if GTA_NY
+			GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN, L"crashhandler.dll", &steamCH_pin);
+#else
 			GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN, L"crashhandler64.dll", &steamCH_pin);
+#endif
 		}
 
 		// load the Steam overlay, if 'rtsshooks64.dll' is not present
+#if GTA_NY
+		if (GetModuleHandleW(L"rtsshooks.dll") == nullptr)
+#else
 		if (GetModuleHandleW(L"rtsshooks64.dll") == nullptr)
+#endif
 		{
 			LoadGameOverlayRenderer(steamDllPath);
 		}
@@ -120,10 +131,6 @@ bool SteamLoader::IsSteamRunning(bool ignoreCreateFunc)
 {
 	static auto retval = ([this]()
 	{
-		// #TODOLIBERTY: un-x64ify steam
-#if defined GTA_NY
-		return false;
-#endif
 		bool retval = false;
 
 		uint32_t pid = GetSteamProcessId();

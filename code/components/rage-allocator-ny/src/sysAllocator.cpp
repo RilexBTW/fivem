@@ -28,7 +28,6 @@ sysMemAllocator* sysMemAllocator::UpdateAllocatorValue()
 {
 	if (g_gtaTlsEntry)
 	{
-		trace("alloc valeu update\n");
 		*(sysMemAllocator**)(*(uintptr_t*)(__readfsdword(44)) + sysMemAllocator::GetAllocatorTlsOffset()) = g_gtaTlsEntry;
 		//*(sysMemAllocator**)(*(uintptr_t*)(__readfsdword(44)) + sysMemAllocator::GetAllocatorTlsOffset() - 4) = g_gtaTlsEntry;
 

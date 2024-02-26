@@ -68,6 +68,8 @@ static std::wstring GetRootPath()
 		appDataPath += L"\\FiveM";
 #elif defined(IS_RDR3)
 		appDataPath += L"\\RedM";
+#elseif defined(GTA_NY)
+		appDataPath += L"\\LibertyM";
 #else
 		appDataPath += L"\\Cfx.re";
 #endif

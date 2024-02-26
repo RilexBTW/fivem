@@ -35,6 +35,8 @@ fwPlatformString GetAbsoluteCitPath()
 			{
 #ifdef IS_RDR3
 				if (!CreateDirectory((citizenPath + L"RedM.app").c_str(), nullptr))
+#elif defined(GTA_NY)
+				if (!CreateDirectory((citizenPath + L"LibertyM.app").c_str(), nullptr))
 #else
 				if (!CreateDirectory((citizenPath + L"FiveM.app").c_str(), nullptr))
 #endif
@@ -55,6 +57,8 @@ fwPlatformString GetAbsoluteCitPath()
 			std::wstring subPath = citizenPath +
 #ifdef IS_RDR3
 								   L"RedM.app";
+#elif defined(GTA_NY)
+								   L"LibertyM.app";
 #else
 								   L"FiveM.app";
 #endif

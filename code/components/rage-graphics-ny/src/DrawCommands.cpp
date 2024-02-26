@@ -11,6 +11,8 @@
 
 #define PURECALL() __asm { jmp _purecall }
 
+static IDirect3DDevice9** g_d3d9Device;
+
 CImplementedDC::CImplementedDC()
 {
 	
@@ -145,6 +147,9 @@ static hook::cdecl_stub<void()> _drawImVertices([]()
 
 namespace rage
 {
+	int* g_windowWidth;
+	int* g_windowHeight;
+
 	void grcBegin(int type, int count) 
 	{ 
 		_beginImVertices(type, count);
@@ -258,27 +263,26 @@ void DrawImSprite(float x1, float y1, float x2, float y2, float z, float u1, flo
 	_drawImSprite(x1, y1, x2, y2, z, u1, v1, u2, v2, color, subShader);
 }
 
-int* g_resolutionX;
-int* g_resolutionY;
-
 static HookFunction hookFunc([]() 
 {
+	g_d3d9Device = *(IDirect3DDevice9***)(hook::get_call(hook::get_pattern<char>("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4)) + 0x1D);
+
 	static auto location = hook::get_pattern<char>("F3 0F 11 4C 24 60 E8 ? ? ? ? 8B 1D");
-	g_resolutionX = *(int**)(location + 0x21);
-	g_resolutionY = *(int**)(location + 0x0D);
+	rage::g_windowWidth = *(int**)(location + 0x21);
+	rage::g_windowHeight = *(int**)(location + 0x0D);
 });
 
 void GetGameResolution(int& resX, int& resY)
 {
-	if (!g_resolutionX || !g_resolutionY)
+	if (!rage::g_windowWidth || !rage::g_windowHeight)
 	{
 		resX = 0;
 		resY = 0;
 		return;
 	}
 
-	resX = *g_resolutionX;
-	resY = *g_resolutionY;
+	resX = *rage::g_windowWidth;
+	resY = *rage::g_windowHeight;
 }
 
 static hook::cdecl_stub<void(int, int)> _setRenderState([]()
@@ -317,9 +321,7 @@ void SetScissorRect(int a, int b, int c, int d)
 
 IDirect3DDevice9* GetD3D9Device()
 {
-	IDirect3DDevice9** device = *(IDirect3DDevice9***)(hook::get_call(hook::get_pattern<char>("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4)) + 0x1D);
-
-	return *device;
+	return *g_d3d9Device;
 }
 
 DC_EXPORT fwEvent<> OnPostFrontendRender;

@@ -607,6 +607,8 @@ int RealMain()
 	LoadLibrary(MakeRelativeCitPath(L"dinput8.dll").c_str());
 #ifndef GTA_NY
 	LoadLibrary(MakeRelativeCitPath(L"steam_api64.dll").c_str());
+#else
+	LoadLibrary(MakeRelativeCitPath(L"steam_api.dll").c_str());
 #endif
 	// laod V8 DLLs in case end users have these in a 'weird' directory
 	LoadLibrary(MakeRelativeCitPath(L"bin/icuuc.dll").c_str());

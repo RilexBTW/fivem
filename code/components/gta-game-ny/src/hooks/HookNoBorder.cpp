@@ -3,6 +3,7 @@
 class CommandLineOption;
 
 static RECT g_curRect;
+static HWND g_window;
 static CommandLineOption** g_curOption; //= *(CommandLineOption**)0x184A244;
 
 class CommandLineOption
@@ -38,8 +39,49 @@ static HMONITOR GetPrimaryMonitorHandle()
 
 static CommandLineOption* g_noborder;
 
+static bool WINAPI MoveWindowCustom(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
+{
+	RECT rect = { X, Y, nWidth, nHeight };
+	MONITORINFO info;
+	HMONITOR monitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	info.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(monitor, &info);
+	float DesktopResW = info.rcMonitor.right - info.rcMonitor.left;
+	float DesktopResH = info.rcMonitor.bottom - info.rcMonitor.top;
+	if ((rect.right - rect.left >= DesktopResW) || (rect.bottom - rect.top >= DesktopResH))
+	{
+		rect = g_curRect;
+	}
+	rect.left = (LONG)((DesktopResW / 2.0f) - (rect.right / 2.0f));
+	rect.top = (LONG)((DesktopResH / 2.0f) - (rect.bottom / 2.0f));
+	return MoveWindow(hWnd, rect.left, rect.top, rect.right, rect.bottom, bRepaint);
+}
+
+static void HandleWindowStyle()
+{
+	if (g_window)
+	{
+		RECT rect = g_curRect;
+		LONG lStyle = GetWindowLong(g_window, GWL_STYLE);
+
+		if (g_noborder->value)
+		{
+			lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+		}
+		else
+		{
+			GetWindowRect(g_window, &rect);
+			lStyle |= (WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+		}
+		AdjustWindowRect(&rect, lStyle, FALSE);
+		SetWindowLong(g_window, GWL_STYLE, lStyle);
+		MoveWindowCustom(g_window, 0, 0, rect.right - rect.left, rect.bottom - rect.top, TRUE);
+	}
+}
+
 static HWND WINAPI CreateWindowExWCustom(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
+	/*
 	if (!_wcsicmp(lpClassName, L"grcWindow"))
 	{
 		if (!g_noborder->value)
@@ -59,12 +101,16 @@ static HWND WINAPI CreateWindowExWCustom(DWORD dwExStyle, LPCWSTR lpClassName, L
 			dwExStyle = 0;
 		}
 	}
+	*/
 
-	return CreateWindowExW(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	g_window = CreateWindowExW(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	HandleWindowStyle();
+	return g_window;
 }
 
 static HWND WINAPI CreateWindowExACustom(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
+	/*
 	if (!strcmp(lpClassName, "grcWindow"))
 	{
 		if (!g_noborder->value)
@@ -84,8 +130,10 @@ static HWND WINAPI CreateWindowExACustom(DWORD dwExStyle, LPCSTR lpClassName, LP
 			dwExStyle = 0;
 		}
 	}
-
-	return CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	*/
+	g_window =  CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	HandleWindowStyle();
+	return g_window;
 }
 
 static bool WINAPI SetRectCustom(LPRECT lprc, int xLeft, int yTop, int xRight, int yBottom)
@@ -94,22 +142,18 @@ static bool WINAPI SetRectCustom(LPRECT lprc, int xLeft, int yTop, int xRight, i
 	return SetRect(lprc, xLeft, yTop, xRight, yBottom);
 }
 
-static bool WINAPI MoveWindowCustom(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
+static bool WINAPI AdjustWindowRectCustom(LPRECT lpRect, DWORD dwStyle, BOOL bMenu)
 {
-	RECT rect = { X, Y, nWidth, nHeight };
-	MONITORINFO info;
-	HMONITOR monitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
-	info.cbSize = sizeof(MONITORINFO);
-	GetMonitorInfo(monitor, &info);
-	float DesktopResW = info.rcMonitor.right - info.rcMonitor.left;
-	float DesktopResH = info.rcMonitor.bottom - info.rcMonitor.top;
-	if ((rect.right - rect.left >= DesktopResW) || (rect.bottom - rect.top >= DesktopResH))
+	if (g_noborder->value)
 	{
-		rect = g_curRect;
+		dwStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+	} 
+	else
+	{
+		dwStyle |= (WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
 	}
-	rect.left = (LONG)((DesktopResW / 2.0f) - (rect.right / 2.0f));
-	rect.top = (LONG)((DesktopResH / 2.0f) - (rect.bottom / 2.0f));
-	return MoveWindow(hWnd, rect.left, rect.top, rect.right, rect.bottom, bRepaint);
+
+	return AdjustWindowRect(lpRect, dwStyle, bMenu);
 }
 
 static HookFunction windowInit([] ()
@@ -117,6 +161,7 @@ static HookFunction windowInit([] ()
 	hook::iat("user32.dll", CreateWindowExACustom, "CreateWindowExA");
 	hook::iat("user32.dll", CreateWindowExWCustom, "CreateWindowExW");
 	hook::iat("user32.dll", MoveWindowCustom, "MoveWindow");
+	hook::iat("user32.dll", AdjustWindowRectCustom, "AdjustWindowRect");
 	hook::iat("user32.dll", SetRectCustom, "SetRect");
 
 	// 1.2.0.30: "8A 44 24 0C 88 41 10", 8
