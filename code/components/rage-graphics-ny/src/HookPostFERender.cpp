@@ -49,7 +49,7 @@ static void __fastcall grcSetup_PresentWrap(void* self)
 static HookFunction hookFunction([] ()
 {
 	// always invoke frontend renderphase
-	hook::put<uint8_t>(hook::get_pattern("6A 00 6A 10 68 50 09", -2), 0xEB);
+	//hook::put<uint8_t>(hook::get_pattern("6A 00 6A 10 68 50 09", -2), 0xEB);
 
 	shouldDrawFrontend = *hook::get_pattern<uint8_t*>("55 8B EC 83 E4 F8 80 3D", 8);
 

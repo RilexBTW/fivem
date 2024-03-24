@@ -159,7 +159,7 @@ static std::wstring MapRedirectedFilename(const wchar_t* origFileName)
 	}
 
 	// Program Files (x86)
-	if (wcsstr(origFileName, L"Files (x86)\\Rockstar Games\\Social Club") != nullptr || wcsstr(origFileName, g_programFilesX86Root.c_str()) != nullptr)
+	if (wcsstr(origFileName, L"Files (x86)\\Rockstar Games\\Social Club") != nullptr || wcsstr(origFileName, g_scX86FilesRoot.c_str()) != nullptr)
 	{
 		return MakeRelativeCitPath(L"data\\game-storage\\ros_2079_x86") + &wcsstr(origFileName, L"Games\\Social Club")[17];
 	}

@@ -312,6 +312,12 @@ static HookFunction hookFunction([]()
 		hook::nop(location, 7); // ignore ShowCursor calls
 	}
 
+	//Fix mouse cursor scale
+	{
+	//	hook::put<float>(hook::get_pattern("F3 0F 11 44 24 ? FF 50 ? 66 0F 6E C0 0F 5B C0 6A"), 30.0f * 0.0009765625f);
+	//	hook::put<float>(hook::get_pattern("F3 0F 11 44 24 ? E8 ? ? ? ? D9 5C 24 ? 80 3D ? ? ? ? ? 74 ? F3 0F 10 05"), 30.0f * 0.000976562f);
+	}
+
 	{
 		auto location = hook::get_pattern<char>("51 8B 54 24 0C C7 04 24 00 00 00 00");
 		hook::jump(location, SetMouseAxisDelta);
