@@ -167,6 +167,8 @@ local function launcherpersonality_inner(name, aslr)
 
 				if name == 'game_43' then gameBuild = '43_0' end
 				if name == 'game_59' then gameBuild = '59_0' end
+
+				gameDump = ("C:\\f\\GTAIV_%s.exe"):format(gameBuild)
 			end
 
 			if name == 'game_mtl' then

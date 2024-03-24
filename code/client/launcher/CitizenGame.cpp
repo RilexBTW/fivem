@@ -447,7 +447,7 @@ void CitizenGame::Launch(const std::wstring& gamePath, bool isMainGame)
 #ifdef LAUNCHER_PERSONALITY_GAME
 	// load the game executable data in temporary memory
 	FILE* gameFile = _wfopen(MapRedirectedFilename(gamePath.c_str()).c_str(), L"rb");
-	
+
 	if (!gameFile)
 	{
 		return;
@@ -484,97 +484,96 @@ void CitizenGame::Launch(const std::wstring& gamePath, bool isMainGame)
 #else
 #error No load limit defined.
 #endif
-	exeLoader.SetLibraryLoader([] (const char* libName)
+	exeLoader.SetLibraryLoader([](const char* libName)
 	{
-		if (!_stricmp(libName, "xlive.dll"))
-		{
-			return (HMODULE)INVALID_HANDLE_VALUE;
-		}
-
-		if (!_stricmp(libName, "d3d9.dll"))
-		{
-			std::wstring gameDll = MakeRelativeCitPath(L"bin\\SwiftShaderD3D9_64.dll");
-
-			if (GetFileAttributes(gameDll.c_str()) != INVALID_FILE_ATTRIBUTES)
+			if (!_stricmp(libName, "xlive.dll"))
 			{
-				return LoadLibrary(gameDll.c_str());
+				return (HMODULE)INVALID_HANDLE_VALUE;
 			}
-		}
 
-		if (!_stricmp(libName, "xinput1_3.dll") || !_stricmp(libName, "xinput1_2.dll") || !stricmp(libName, "xinput1_1.dll"))
-		{
-			HMODULE hm = LoadLibrary(L"xinput1_4.dll");
-			
-			if (hm)
+			if (!_stricmp(libName, "d3d9.dll"))
 			{
-				return hm;
+				std::wstring gameDll = MakeRelativeCitPath(L"bin\\SwiftShaderD3D9_64.dll");
+
+				if (GetFileAttributes(gameDll.c_str()) != INVALID_FILE_ATTRIBUTES)
+				{
+					return LoadLibrary(gameDll.c_str());
+				}
 			}
-		}
 
-		if (!_stricmp(libName, "d3dcompiler_43.dll"))
-		{
-			HMODULE hm = LoadLibrary(L"d3dcompiler_47.dll");
-
-			if (hm)
+			if (!_stricmp(libName, "xinput1_3.dll") || !_stricmp(libName, "xinput1_2.dll") || !stricmp(libName, "xinput1_1.dll"))
 			{
-				return hm;
+				HMODULE hm = LoadLibrary(L"xinput1_4.dll");
+
+				if (hm)
+				{
+					return hm;
+				}
 			}
-		}
 
-		if (!_stricmp(libName, "gfsdk_shadowlib.win64.dll"))
-		{
-			return LoadLibrary(MakeRelativeCitPath(L"bin/gfsdk_shadowlib.dll").c_str());
-		}
-
-		// ATL80.dll is SxS, but it's unused by the game
-		if (!_stricmp(libName, "atl80.dll"))
-		{
-			return (HMODULE)INVALID_HANDLE_VALUE;
-		}
-
-		if (_stricmp(libName, "libcef.dll") == 0)
-		{
-			if (getenv("CitizenFX_ToolMode"))
+			if (!_stricmp(libName, "d3dcompiler_43.dll"))
 			{
-				// pre-load the correct chrome_elf.dll
-				LoadLibraryW(MapRedirectedFilename(L"Social Club/chrome_elf.dll").c_str());
+				HMODULE hm = LoadLibrary(L"d3dcompiler_47.dll");
 
-				return LoadLibraryW(MapRedirectedFilename(L"Social Club/libcef.dll").c_str());
+				if (hm)
+				{
+					return hm;
+				}
 			}
-		}
 
-		return LoadLibraryA(libName);
+			if (!_stricmp(libName, "gfsdk_shadowlib.win64.dll"))
+			{
+				return LoadLibrary(MakeRelativeCitPath(L"bin/gfsdk_shadowlib.dll").c_str());
+			}
+
+			// ATL80.dll is SxS, but it's unused by the game
+			if (!_stricmp(libName, "atl80.dll"))
+			{
+				return (HMODULE)INVALID_HANDLE_VALUE;
+			}
+
+			if (_stricmp(libName, "libcef.dll") == 0)
+			{
+				if (getenv("CitizenFX_ToolMode"))
+				{
+					// pre-load the correct chrome_elf.dll
+					LoadLibraryW(MapRedirectedFilename(L"Social Club/chrome_elf.dll").c_str());
+
+					return LoadLibraryW(MapRedirectedFilename(L"Social Club/libcef.dll").c_str());
+				}
+			}
+
+			return LoadLibraryA(libName);
 	});
 
-	exeLoader.SetFunctionResolver([] (HMODULE module, const char* functionName) -> LPVOID
+	exeLoader.SetFunctionResolver([](HMODULE module, const char* functionName) -> LPVOID
 	{
-		if (!_stricmp(functionName, "GetStartupInfoW"))
-		{
-			return GetStartupInfoWHook;
-		}
+			if (!_stricmp(functionName, "GetStartupInfoW"))
+			{
+				return GetStartupInfoWHook;
+			}
 
 #if defined(GTA_FIVE) || defined(IS_RDR3)
-		if (!_stricmp(functionName, "SetWindowsHookExA"))
-		{
-			return NoWindowsHookExA;
-		}
-		else if (!_stricmp(functionName, "CreateFileW"))
-		{
-			return CreateFileWHook;
-		}
-		else if (!_stricmp(functionName, "GetFileAttributesExW"))
-		{
-			return GetFileAttributesExWHook;
-		}
-		else if (!_stricmp(functionName, "GetFileAttributesW"))
-		{
-			return GetFileAttributesWHook;
-		}
+			if (!_stricmp(functionName, "SetWindowsHookExA"))
+			{
+				return NoWindowsHookExA;
+			}
+			else if (!_stricmp(functionName, "CreateFileW"))
+			{
+				return CreateFileWHook;
+			}
+			else if (!_stricmp(functionName, "GetFileAttributesExW"))
+			{
+				return GetFileAttributesExWHook;
+			}
+			else if (!_stricmp(functionName, "GetFileAttributesW"))
+			{
+				return GetFileAttributesWHook;
+			}
 #endif
 
-		return (LPVOID)GetProcAddress(module, functionName);
+			return (LPVOID)GetProcAddress(module, functionName);
 	});
-
 	exeLoader.LoadIntoModule(exeModule);
 
 #if defined(GTA_FIVE) && defined(RWX_TEST)
@@ -589,7 +588,7 @@ void CitizenGame::Launch(const std::wstring& gamePath, bool isMainGame)
 	memset(exeModule, 0, 0x1000);
 	memcpy(exeModule, data, 0x200);
 #endif
-	
+
 	// free the old binary
 	delete[] data;
 

@@ -1373,6 +1373,7 @@ result_t LuaScriptRuntime::Create(IScriptHost* scriptHost)
 
 	if (FX_FAILED(hr = LoadNativesBuild(nativesBuild)))
 	{
+		trace("Unable to load natives build %s\n", nativesBuild);
 		return hr;
 	}
 

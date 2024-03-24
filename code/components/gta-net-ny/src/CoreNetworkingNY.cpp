@@ -227,10 +227,10 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 	return success;*/
 
 	// .43 & .59
-	* (uint8_t*)0x18B82CC = 1;
-	*(uint32_t*)0x18B82D0 = g_netLibrary->GetServerBase() ^ 0xABCD;
-	*(uint64_t*)0x1BB3970 = g_netLibrary->GetServerBase();
-	*(uint64_t*)(0x1BB3970 + 8) = g_netLibrary->GetServerBase();
+	hook::put<uint8_t>(0x18B82CC, 1);
+	hook::put<uint32_t>(0x18B82D0, g_netLibrary->GetServerBase() ^ 0xABCD);
+	hook::put<uint64_t>(0x1BB3970, g_netLibrary->GetServerBase());
+	hook::put<uint64_t>(0x1BB3970 + 8, g_netLibrary->GetServerBase());
 	//*(uint64_t*)0x19F3278 = g_netLibrary->GetServerNetID();
 
 	static auto onlineAddress = *hook::get_pattern<OnlineAddress*>("50 53 8D 44 24 24 50 68 ? ? ? ? 8D", 8);
@@ -250,8 +250,6 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 		onlineAddress2->ip1 = onlineAddress2->ip2 = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
 		onlineAddress2->port1 = onlineAddress2->port2 = 6672;
 	}
-
-	//TODONY: .59
 
 	//memset(address, 0, sizeof(*address));
 
@@ -281,7 +279,8 @@ void SocketInitHook()
 	((void(__fastcall*)(void*, uint16_t))hook::get_pattern("F6 86 A0 00 00 00 20 75 3A", -0x29))(socketPtr, 6672); // bind wrap
 
 	// yes, the relay is active
-	**hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2) = 1;
+	hook::put<uint8_t>(hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2), 1);
+	//**hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2) = 1;
 
 	static auto onRelayReceived = ((void(__thiscall*)(void*, void*))hook::get_pattern("8B 44 24 04 83 78 20 02"));
 	static auto onSocketEventReceiveThreadTicked = ((void(__thiscall*)(void*, void*))hook::get_pattern("83 78 20 04 8B F1", -5));
@@ -371,8 +370,6 @@ static bool* didPresenceStuff;
 
 static hook::cdecl_stub<void()> _doPresenceStuff([]()
 {
-	// .43
-	//return (void*)0x6C3E60;
 	return hook::get_pattern("53 32 DB 38 1D ? ? ? ? 75");
 });
 

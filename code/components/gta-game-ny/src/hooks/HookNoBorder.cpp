@@ -31,13 +31,14 @@ public:
 	}
 };
 
+static CommandLineOption* g_noborder;
+
 static HMONITOR GetPrimaryMonitorHandle()
 {
 	const POINT ptZero = { 0, 0 };
 	return MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
 }
 
-static CommandLineOption* g_noborder;
 
 static bool WINAPI MoveWindowCustom(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
 {
@@ -102,7 +103,6 @@ static HWND WINAPI CreateWindowExWCustom(DWORD dwExStyle, LPCWSTR lpClassName, L
 		}
 	}
 	*/
-
 	g_window = CreateWindowExW(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 	HandleWindowStyle();
 	return g_window;
@@ -131,7 +131,7 @@ static HWND WINAPI CreateWindowExACustom(DWORD dwExStyle, LPCSTR lpClassName, LP
 		}
 	}
 	*/
-	g_window =  CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	g_window = CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 	HandleWindowStyle();
 	return g_window;
 }
@@ -160,9 +160,9 @@ static HookFunction windowInit([] ()
 {
 	hook::iat("user32.dll", CreateWindowExACustom, "CreateWindowExA");
 	hook::iat("user32.dll", CreateWindowExWCustom, "CreateWindowExW");
-	hook::iat("user32.dll", MoveWindowCustom, "MoveWindow");
-	hook::iat("user32.dll", AdjustWindowRectCustom, "AdjustWindowRect");
-	hook::iat("user32.dll", SetRectCustom, "SetRect");
+	//hook::iat("user32.dll", MoveWindowCustom, "MoveWindow");
+	//hook::iat("user32.dll", AdjustWindowRectCustom, "AdjustWindowRect");
+	//hook::iat("user32.dll", SetRectCustom, "SetRect");
 
 	// 1.2.0.30: "8A 44 24 0C 88 41 10", 8
 	g_curOption = *hook::get_pattern<CommandLineOption**>("8B 44 24 10 89 41 04 A1", 8);

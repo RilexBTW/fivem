@@ -42,8 +42,6 @@ bool LauncherInterface::PreLoadGame(void* cefSandbox)
 		}
 	}
 	
-	bool continueRunning = true;
-
 	// initialize component instances
     if (!getenv("CitizenFX_ToolMode"))
     {
@@ -61,7 +59,7 @@ bool LauncherInterface::PreLoadGame(void* cefSandbox)
 	SetHooksDll(g_hooksDLL);
 
 	// and start running the game
-	return continueRunning;
+	return true;
 }
 
 bool LauncherInterface::PostLoadGame(HMODULE hModule, void(**entryPoint)())

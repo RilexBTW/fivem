@@ -16,7 +16,7 @@
 #define DEFAULT_APP_ID "879627773839278110"
 #define DEFAULT_APP_ASSET "redm_large"
 #elif defined(GTA_NY)
-#define DEFAULT_APP_ID ""
+#define DEFAULT_APP_ID "1220839425064304763"
 #define DEFAULT_APP_ASSET "libertym_large"
 #endif
 

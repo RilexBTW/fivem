@@ -9,6 +9,11 @@
 #include "DrawCommands.h"
 #include "Hooking.h"
 
+#include <HostSharedData.h>
+#include <CfxState.h>
+#include <ReverseGameData.h>
+#include <CrossBuildRuntime.h>
+
 fwEvent<> OnGrcCreateDevice;
 fwEvent<> OnGrcBeginScene;
 fwEvent<> OnGrcEndScene;
@@ -39,6 +44,37 @@ static void __stdcall InvokeCreateCB(void* a1, HEAP_INFORMATION_CLASS a2, void* 
 	OnGrcCreateDevice();
 }
 
+static HWND g_gtaWindow;
+static decltype(&CreateWindowExW) g_origCreateWindowExW;
+
+static HWND WINAPI HookCreateWindowExW(_In_ DWORD dwExStyle, _In_opt_ LPCWSTR lpClassName, _In_opt_ LPCWSTR lpWindowName, _In_ DWORD dwStyle, _In_ int X, _In_ int Y, _In_ int nWidth, _In_ int nHeight, _In_opt_ HWND hWndParent, _In_opt_ HMENU hMenu, _In_opt_ HINSTANCE hInstance, _In_opt_ LPVOID lpParam)
+{
+	static HostSharedData<CfxState> initState("CfxInitState");
+	HWND w;
+
+	auto wndName = L"LibertyM™ by Cfx.re";
+
+	if (initState->isReverseGame)
+	{
+		static HostSharedData<ReverseGameData> rgd("CfxReverseGameData");
+
+		w = g_origCreateWindowExW(dwExStyle, lpClassName, wndName, WS_POPUP | WS_CLIPSIBLINGS, 0, 0, rgd->width, rgd->height, NULL, hMenu, hInstance, lpParam);
+	}
+	else
+	{
+		w = g_origCreateWindowExW(dwExStyle, lpClassName, wndName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+	}
+
+	if (lpClassName && wcscmp(lpClassName, L"grcWindow") == 0)
+	{
+		CoreSetGameWindow(w);
+	}
+
+	g_gtaWindow = w;
+
+	return w;
+}
+
 static HookFunction hookFunction([] ()
 {
 	static hook::inject_call<void, int> beginSceneCB((ptrdiff_t)hook::get_pattern("56 8B F1 E8 ? ? ? ? 80 7C 24 08 00", 3));
@@ -48,7 +84,6 @@ static HookFunction hookFunction([] ()
 
 		OnGrcBeginScene();
 	});
-
 
 	// end scene callback dc
 	//hook::put(0x796B9E, InvokeEndSceneCBStub);
@@ -67,9 +102,5 @@ static HookFunction hookFunction([] ()
 		hook::call(location, InvokeCreateCB);
 	}
 
-	// frontend render phase
-	//hook::put(0xE9F1AC, InvokeFrontendCBStub);
-
-	// in-menu check for renderphasefrontend
-	//*(BYTE*)0x43AF21 = 0xEB;
+	g_origCreateWindowExW = hook::iat("user32.dll", HookCreateWindowExW, "CreateWindowExW");
 });

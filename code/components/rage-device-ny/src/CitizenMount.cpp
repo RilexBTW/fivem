@@ -8,7 +8,6 @@
 #include "StdInc.h"
 #include "fiDevice.h"
 #include "Hooking.h"
-#include "boost/assign.hpp"
 
 #include <boost/algorithm/string.hpp>
 

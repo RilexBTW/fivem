@@ -11,7 +11,7 @@ return {
 		else
 			links { 'crypto' }
 		end
-		
+
 		defines { 'OPENSSL_NO_KRB5' }
 	end,
 	
@@ -22,7 +22,7 @@ return {
 			kind 'StaticLib'
 			return
 		end
-		
+
 		language "C"
 		kind "StaticLib"
 		

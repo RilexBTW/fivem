@@ -19,11 +19,6 @@
 #include <ScriptHandlerMgr.h>
 #endif
 
-// BLIP_8 in global.gxt2 -> 'Waypoint'
-#define BLIP_WAYPOINT 8
-
-
-#ifndef GTA_NY
 #include <SteamComponentAPI.h>
 
 inline ISteamComponent* GetSteam()
@@ -38,8 +33,6 @@ inline ISteamComponent* GetSteam()
 
 	return steamComponent;
 }
-
-#endif
 
 class LovelyThread : public GtaThread
 {
@@ -151,39 +144,37 @@ public:
 		ProcessPopulationToggle();
 
 // PLAYER_PED_ID
+		uint32_t playerPedId;
 #ifdef GTA_FIVE
-		uint32_t playerPedId = NativeInvoke::Invoke<0xD80958FC74E988A6, uint32_t>();
+		playerPedId = NativeInvoke::Invoke<0xD80958FC74E988A6, uint32_t>();
 #elif defined(IS_RDR3)
-		uint32_t playerPedId = NativeInvoke::Invoke<0x096275889B8E0EE0, uint32_t>();
+		playerPedId = NativeInvoke::Invoke<0x096275889B8E0EE0, uint32_t>();
 #elif defined(GTA_NY)
-		uint32_t playerPedId = NativeInvoke::Invoke<0x511454A9, uint32_t>(NativeInvoke::Invoke<0x62E319C6, uint32_t>());
+		uint32_t playerId = NativeInvoke::Invoke<0x62E319C6, uint32_t>();
+		NativeInvoke::Invoke<0x511454A9, uint32_t>(playerId, &playerPedId);
 #endif
 
 		auto setPresenceTemplate = [](std::string_view value)
 		{
 			std::string valueStr{ value };
-#ifndef GTA_NY
 			static auto steam = GetSteam();
 
 			if (steam)
 			{
 				steam->SetRichPresenceTemplate(valueStr);
 			}
-#endif
 			OnRichPresenceSetTemplate(valueStr);
 		};
 
 		auto setPresenceValue = [](int idx, std::string_view value)
 		{
 			std::string valueStr{ value };
-#ifndef GTA_NY
 			static auto steam = GetSteam();
 
 			if (steam)
 			{
 				steam->SetRichPresenceValue(idx, valueStr);
 			}
-#endif
 			OnRichPresenceSetValue(idx, valueStr);
 		};
 

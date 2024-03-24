@@ -25,11 +25,10 @@ bool ComponentInstance::Initialize()
 	return true;
 }
 
-void InitInputHook();
 
 bool ComponentInstance::DoGameLoad(void* module)
 {
-	InitInputHook();
+	HookFunction::RunAll();
 
 	return true;
 }

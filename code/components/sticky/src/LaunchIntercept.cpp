@@ -34,8 +34,11 @@ void Component_RunPreInit()
 
 	if (hostData->IsMasterProcess() && !debugMode)
 	{
+#ifndef GTA_NY
 		auto processName = MakeCfxSubProcess(L"GameProcess.exe", fmt::sprintf(L"game_%d%s", xbr::GetGameBuild(), (IsWindows8Point1OrGreater()) ? L"_aslr" : L""));
-
+#else
+		auto processName = MakeCfxSubProcess(L"GameProcess.exe", fmt::sprintf(L"game_%d", xbr::GetGameBuild()));
+#endif
 		STARTUPINFOW si = { 0 };
 		si.cb = sizeof(si);
 
