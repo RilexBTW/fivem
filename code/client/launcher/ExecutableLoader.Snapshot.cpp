@@ -126,7 +126,7 @@ inline uintptr_t GetTriggerEP()
 		return 0xDF9294;
 	}
 
-	return 0x9F8F2B;
+	return 0xDF8F2B;
 }
 
 #define TRIGGER_EP (GetTriggerEP())
