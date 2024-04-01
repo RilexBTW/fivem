@@ -11,8 +11,6 @@
 
 #define PURECALL() __asm { jmp _purecall }
 
-static IDirect3DDevice9** g_d3d9Device;
-
 CImplementedDC::CImplementedDC()
 {
 	
@@ -35,19 +33,6 @@ CBaseDC::~CBaseDC()
 {
 	//PURECALL();
 }
-
-#if unused
-#define VTABLE_CDrawSpriteDC 0xD55A64
-
-auto CDrawSpriteDC__ctor = (void(__thiscall*)(CDrawSpriteDC*, const float* bottomLeft, const float* topLeft, const float* bottomRight, const float* topRight, uint32_t color, rage::grcTexture* texture))0x7C0F00;
-
-CDrawSpriteDC::CDrawSpriteDC(const float* bottomLeft, const float* topLeft, const float* bottomRight, const float* topRight, uint32_t color, rage::grcTexture* texture)
-{
-	*(uintptr_t*)this = VTABLE_CDrawSpriteDC;
-
-	CDrawSpriteDC__ctor(this, bottomLeft, topLeft, bottomRight, topRight, color, texture);
-}
-#endif
 
 static hook::thiscall_stub<void(CGenericDC*, void(*)())> _CGenericDC__ctor([]()
 {
@@ -265,8 +250,6 @@ void DrawImSprite(float x1, float y1, float x2, float y2, float z, float u1, flo
 
 static HookFunction hookFunc([]() 
 {
-	g_d3d9Device = *(IDirect3DDevice9***)(hook::get_call(hook::get_pattern<char>("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4)) + 0x1D);
-
 	static auto location = hook::get_pattern<char>("F3 0F 11 4C 24 60 E8 ? ? ? ? 8B 1D");
 	rage::g_windowWidth = *(int**)(location + 0x21);
 	rage::g_windowHeight = *(int**)(location + 0x0D);
@@ -321,7 +304,5 @@ void SetScissorRect(int a, int b, int c, int d)
 
 IDirect3DDevice9* GetD3D9Device()
 {
-	return *g_d3d9Device;
+	return **(IDirect3DDevice9***)(hook::get_call(hook::get_pattern<char>("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4)) + 0x1D);
 }
-
-DC_EXPORT fwEvent<> OnPostFrontendRender;

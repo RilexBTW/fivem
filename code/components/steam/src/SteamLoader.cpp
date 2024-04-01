@@ -223,8 +223,8 @@ void SteamLoader::LoadGameOverlayRenderer(const std::wstring& baseDllPath)
 		}
 
 		// load the actual overlay dll
-		std::wstring overlayDllPath = baseDllPath.substr(0, baseDllPath.rfind(L'\\')) + L"\\" OVERLAYRENDERER_DLL;
-		HMODULE steamOverlay = LoadLibrary(overlayDllPath.c_str());
+		//std::wstring overlayDllPath = baseDllPath.substr(0, baseDllPath.rfind(L'\\')) + L"\\" OVERLAYRENDERER_DLL;
+		//HMODULE steamOverlay = LoadLibrary(overlayDllPath.c_str());
 
 		// Any valid ScopedHookRestoration will be restored when going out of scope
 	}

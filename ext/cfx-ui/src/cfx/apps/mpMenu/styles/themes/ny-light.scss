@@ -10,7 +10,8 @@ $fg: #011b2f;
 
   // Asset overrides
   @include ui.def('checkered-pattern', url(assets/images/checkered_light.svg));
-  @include ui.def('backdrop-image', url(assets/images/bg2-ny.png));
+  @include ui.def('backdrop-image', url(assets/images/bg2-libertym.png));
+  @include ui.def('backdrop-image-blur', url(assets/images/bg2-libertym-blur.png));
 
   // Color overrides
   @include ui.def               ('text-opacity-10',                .20);

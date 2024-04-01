@@ -491,6 +491,7 @@ void CitizenGame::Launch(const std::wstring& gamePath, bool isMainGame)
 				return (HMODULE)INVALID_HANDLE_VALUE;
 			}
 
+#ifndef GTA_NY
 			if (!_stricmp(libName, "d3d9.dll"))
 			{
 				std::wstring gameDll = MakeRelativeCitPath(L"bin\\SwiftShaderD3D9_64.dll");
@@ -499,6 +500,13 @@ void CitizenGame::Launch(const std::wstring& gamePath, bool isMainGame)
 				{
 					return LoadLibrary(gameDll.c_str());
 				}
+			}
+#endif
+
+			//Some R* Security DLL, breaks across builds and the game is not dependent on it here.
+			if (!_stricmp(libName, "MTLX.dll"))
+			{
+				return (HMODULE)INVALID_HANDLE_VALUE;
 			}
 
 			if (!_stricmp(libName, "xinput1_3.dll") || !_stricmp(libName, "xinput1_2.dll") || !stricmp(libName, "xinput1_1.dll"))

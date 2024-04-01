@@ -14,7 +14,9 @@ import s from './Exitter.module.scss';
 export function Exitter() {
   const [confirmerOpen, openConfirmer, closeConfirmer] = useOpenFlag(false);
 
-  const buttonTheme: ButtonTheme = "default";
+  const buttonTheme: ButtonTheme = NavBarState.forceTransparentNav
+    ? 'default'
+    : 'default-blurred';
 
   return (
     <>

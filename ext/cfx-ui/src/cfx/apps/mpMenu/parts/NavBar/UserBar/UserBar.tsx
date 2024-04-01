@@ -24,7 +24,9 @@ export const UserBar = observer(function UserBar() {
   const AccountService = useAccountService();
   const SettingsUIService = useService(ISettingsUIService);
 
-  const buttonTheme: ButtonTheme = "default";
+  const buttonTheme: ButtonTheme = NavBarState.forceTransparentNav
+    ? 'default'
+    : 'default-blurred';
 
   const streamerMode = useStreamerMode();
 

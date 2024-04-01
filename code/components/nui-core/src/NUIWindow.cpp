@@ -23,6 +23,10 @@
 
 #include <CefOverlay.h>
 
+#ifdef GTA_NY
+#include <grcTexture.h>
+#endif
+
 extern nui::GameInterface* g_nuiGi;
 
 #include "memdbgon.h"
@@ -962,4 +966,14 @@ bool NUIWindow::IsFixedSizeWindow() const
 static InitFunction initFunction([]
 {
 	static ConVar<bool> nuiFixedSize("nui_useFixedSize", ConVar_Archive | ConVar_UserPref, false, &nuiFixedSizeEnabled);
+
+#ifdef GTA_NY
+	OnD3DPostReset.Connect([]()
+	{
+		Instance<NUIWindowManager>::Get()->ForAllWindows([](fwRefContainer<NUIWindow> window)
+		{
+			window->Invalidate();
+		});
+	});
+#endif
 });

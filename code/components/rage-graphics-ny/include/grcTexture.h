@@ -77,12 +77,13 @@ public:
 };
 }
 
-extern
-	#ifdef COMPILING_RAGE_GRAPHICS_NY
-	__declspec(dllexport)
-	#else
-	__declspec(dllimport)
-	#endif
-	fwEvent<> OnD3DPostReset;
+#ifdef COMPILING_RAGE_GRAPHICS_NY
+#define GRAPHICS_DECL __declspec(dllexport)
+#else
+#define GRAPHICS_DECL __declspec(dllimport)
+#endif
+
+extern GRAPHICS_DECL fwEvent<> OnD3DPostReset;
+extern GRAPHICS_DECL fwEvent<> OnD3DPreReset;
 
 void GAMESPEC_EXPORT ClearRenderTarget(bool a1, int value1, bool a2, float value2, bool a3, int value3);

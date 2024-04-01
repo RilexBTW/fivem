@@ -8,8 +8,11 @@ $bg: #011b2f;
     'primary': #2babb4
   ));
 
-  @include ui.def('backdrop-image', url(assets/images/bg2-ny.png));
+  // Asset overrides
+  @include ui.def('backdrop-image', url(assets/images/bg2-libertym.png));
+  @include ui.def('backdrop-image-blur', url(assets/images/bg2-libertym-blur.png));
 
+  // Color overrides
   @include ui.define-color-token('play-button-background-1', rgb(61, 232, 245));
   @include ui.define-color-token('play-button-background-2', rgb(13, 199, 216));
 

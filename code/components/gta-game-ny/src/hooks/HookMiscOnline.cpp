@@ -32,7 +32,8 @@ static HookFunction hookFunction([] ()
 	hook::return_function(hook::get_pattern("83 3D ? ? ? ? FF 74 ? 6A FF"));
 
 	// ignore initial loading screens
-	hook::put<uint8_t>(0x59D5A7, 0xEB);
+	//hook::put<uint8_t>(hook::get_pattern("74 ? 80 3D ? ? ? ? ? 74 ? E8 ? ? ? ? 0F B6 05"), 0XEB);
+	//hook::put<uint8_t>(0x59D5A7, 0xEB);
 	//hook::put<uint8_t>(0x402B49, 0xEB);
 
 	// emergency streaming safeguard related to process address space or something; this is

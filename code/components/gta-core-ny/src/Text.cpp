@@ -6,20 +6,34 @@
  */
 
 #include "StdInc.h"
-#include "Text.h"
 #include <Hooking.h>
+
+#include <shared_mutex>
+#include "Text.h"
 
 static hook::thiscall_stub<const wchar_t*(CText*, const char* textKey)> _CText__Get([]()
 {
 	return hook::get_pattern("83 EC 44 A1 ? ? ? ? 33 C4 89 44 24 40 8B 44 24 48 56 8B F1");
 });
 
+static std::shared_mutex g_textMutex;
+static std::unordered_map<uint32_t, std::wstring> g_customTexts;
+
 const wchar_t* CText::Get(const char* textKey)
-{ 
+{
+	{
+		std::shared_lock lock(g_textMutex);
+
+		auto it = g_customTexts.find(HashString(textKey));
+
+		if (it != g_customTexts.end())
+		{
+			return it->second.c_str();
+		}
+	}
+
 	return _CText__Get(this, textKey);
 }
-
-static std::unordered_map<uint32_t, std::wstring> g_customTexts;
 
 const wchar_t* CText::GetCustom(const char* key)
 {

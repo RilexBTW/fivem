@@ -863,7 +863,6 @@ static HRESULT CopyResourceHook(ID3D11DeviceContext* cxt, ID3D11Resource* dst, I
 
 #pragma comment(lib, "dxgi.lib")
 
-#if !GTA_NY
 static ID3D11DeviceContext* g_origImContext;
 static ID3D11Device* g_origDevice;
 
@@ -871,14 +870,7 @@ DLL_EXPORT ID3D11Device* GetRawD3D11Device()
 {
 	return g_origDevice;
 }
-#else
-static IDirect3DDevice9* g_origDevice;
 
-DLL_EXPORT IDirect3DDevice9* GetRawD3D9Device()
-{
-	return g_origDevice;
-}
-#endif
 
 
 static void PatchAdapter(IDXGIAdapter** pAdapter)
@@ -945,7 +937,6 @@ static void __stdcall FlushHook(void* cxt)
 	g_origFlush(cxt);
 }
 
-#if !GTA_NY
 static void PatchCreateResults(ID3D11Device** ppDevice, ID3D11DeviceContext** ppImmediateContext, bool forceGPU)
 {
 	bool can = true;
@@ -1016,7 +1007,6 @@ static void PatchCreateResults(ID3D11Device** ppDevice, ID3D11DeviceContext** pp
 }
 
 static HRESULT (*g_origD3D11CreateDeviceAndSwapChain)(_In_opt_ IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, _In_reads_opt_(FeatureLevels) CONST D3D_FEATURE_LEVEL* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, _In_opt_ CONST DXGI_SWAP_CHAIN_DESC* pSwapChainDesc, _COM_Outptr_opt_ IDXGISwapChain** ppSwapChain, _COM_Outptr_opt_ ID3D11Device** ppDevice, _Out_opt_ D3D_FEATURE_LEVEL* pFeatureLevel, _COM_Outptr_opt_ ID3D11DeviceContext** ppImmediateContext);
-#endif
 
 #include <variant>
 
@@ -1075,7 +1065,6 @@ private:
 static std::unique_ptr<ModuleData> g_libgl;
 static std::unique_ptr<ModuleData> g_d3d11;
 static HMODULE g_sysD3D11;
-
 // helper to prevent recursive shared acquiring of the lock
 static thread_local bool inDeviceCreation;
 
@@ -1105,7 +1094,6 @@ private:
 	std::shared_lock<std::shared_mutex> lock;
 };
 
-#if !GTA_NY
 static HRESULT D3D11CreateDeviceAndSwapChainHook(_In_opt_ IDXGIAdapter* pAdapter, D3D_DRIVER_TYPE DriverType, HMODULE Software, UINT Flags, _In_reads_opt_(FeatureLevels) CONST D3D_FEATURE_LEVEL* pFeatureLevels, UINT FeatureLevels, UINT SDKVersion, _In_opt_ CONST DXGI_SWAP_CHAIN_DESC* pSwapChainDesc, _COM_Outptr_opt_ IDXGISwapChain** ppSwapChain, _COM_Outptr_opt_ ID3D11Device** ppDevice, _Out_opt_ D3D_FEATURE_LEVEL* pFeatureLevel, _COM_Outptr_opt_ ID3D11DeviceContext** ppImmediateContext)
 {
 	DeviceLock _;
@@ -1202,40 +1190,19 @@ static HRESULT D3D11CreateDeviceHookMain(_In_opt_ IDXGIAdapter* pAdapter, D3D_DR
 
 	return hr;
 }
-#else
-static HRESULT(*g_origD3D9CreateDeviceMain)(LPDIRECT3D9* pDirect3D9, UINT Adapater, D3DDEVTYPE DriverType, HWND hFocusWindow, DWORD bBehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface);
-
-static HRESULT D3D9CreateDeviceHookMain(LPDIRECT3D9* pDirect3D9, UINT Adapater, D3DDEVTYPE DriverType, HWND hFocusWindow, DWORD bBehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface)
-{
-	auto hr = g_origD3D9CreateDeviceMain(pDirect3D9, Adapater, DriverType, hFocusWindow, bBehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
-
-	trace("Create Devhice\n");
-	if (!g_origDevice && ppReturnedDeviceInterface && *ppReturnedDeviceInterface)
-	{
-		g_origDevice = *ppReturnedDeviceInterface;
-	}
-
-	return hr;
-}
-#endif
 
 #include <psapi.h>
 
 void HookLibGL(HMODULE libGL)
 {
+#if !GTA_NY
 	wchar_t systemDir[MAX_PATH];
 	GetSystemDirectoryW(systemDir, std::size(systemDir));
 
 	HMODULE realSysDll = NULL;
-#if !GTA_NY
 	auto sysDllName = va(L"%s\\d3d11.dll", systemDir);
 	auto sysDll = LoadLibraryW(sysDllName);
 	auto mainDll = LoadLibraryW(L"d3d11.dll");
-#else
-	auto sysDllName = va(L"%s\\d3d9.dll", systemDir);
-	auto sysDll = LoadLibraryW(sysDllName);
-	auto mainDll = LoadLibraryW(L"d3d9.dll");
-#endif
     HMODULE hMods[1024];
 	DWORD cbNeeded;
 
@@ -1259,12 +1226,10 @@ void HookLibGL(HMODULE libGL)
 
 	g_sysD3D11 = realSysDll;
 	g_d3d11 = std::unique_ptr<ModuleData>(new ModuleData{ realSysDll });
-
 	// maybe
 	g_reshit = true;
 
 	MH_Initialize();
-#if !GTA_NY
 	MH_CreateHook(GetProcAddress(libGL, "glTexParameterf"), glTexParameterfHook, (void**)&g_origglTexParameterf);
 	MH_CreateHook(GetProcAddress(libGL, "glBindTexture"), glBindTextureHook, (void**)&g_origglBindTexture);
 	MH_CreateHook(GetProcAddress(libGL, "glDeleteTextures"), glDeleteTexturesHook, (void**)&g_origglDeleteTextures);
@@ -1286,9 +1251,9 @@ void HookLibGL(HMODULE libGL)
 	{
 		MH_CreateHook(GetProcAddress(mainDll, "D3D11CreateDevice"), D3D11CreateDeviceHookMain, (void**)&g_origD3D11CreateDeviceMain);
 	}
-#endif
 
 	MH_EnableHook(MH_ALL_HOOKS);
+#endif
 }
 
 extern bool g_inited;

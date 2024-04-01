@@ -933,7 +933,6 @@ void GSClient_SaveFavorites(const wchar_t *json)
 
 static InitFunction initFunction([] ()
 {
-#if 0
 	nui::RPCHandlerManager* rpcHandlerManager = Instance<nui::RPCHandlerManager>::Get();
 	rpcHandlerManager->RegisterEndpoint("gsclient", [](std::string functionName, std::string arguments, std::map<std::string, std::string> postMap, nui::RPCHandlerManager::TCallbackFn cb)
 	{
@@ -1087,6 +1086,4 @@ static InitFunction initFunction([] ()
 			GSClient_RunFrame();
 		}
 	}).detach();
-
-#endif
 });

@@ -65,12 +65,25 @@ static bool g_useHostCursor;
 
 void EnableHostCursor()
 {
-	while (ShowCursor(TRUE) < 0);
+	while (ShowCursor(TRUE) < 0)
+		;
 }
 
 void DisableHostCursor()
 {
-	while (ShowCursor(FALSE) >= 0);
+	while (ShowCursor(FALSE) >= 0)
+		;
+}
+
+static INT HookShowCursor(BOOL show)
+{
+	if (g_useHostCursor)
+	{
+
+		return (show) ? 0 : -1;
+	}
+
+	return ShowCursor(show);
 }
 
 void InputHook::SetHostCursorEnabled(bool enabled)
@@ -87,54 +100,6 @@ void InputHook::SetHostCursorEnabled(bool enabled)
 	}
 
 	g_useHostCursor = enabled;
-}
-
-BOOL WINAPI ClipCursorWrap(const RECT* lpRekt)
-{
-	static RECT lastRect;
-	static RECT* lastRectPtr;
-
-	int may = 1;
-	InputHook::QueryMayLockCursor(may);
-
-	if (!may)
-	{
-		lpRekt = nullptr;
-	}
-
-	if ((lpRekt && !lastRectPtr) || (lastRectPtr && !lpRekt) || (lpRekt && !EqualRect(&lastRect, lpRekt)))
-	{
-		// update last rect
-		if (lpRekt)
-		{
-			lastRect = *lpRekt;
-			lastRectPtr = &lastRect;
-		}
-		else
-		{
-			memset(&lastRect, 0xCC, 0);
-			lastRectPtr = nullptr;
-		}
-
-		return ClipCursor(lpRekt);
-	}
-
-	return TRUE;
-}
-
-HKL WINAPI ActivateKeyboardLayoutWrap(IN HKL hkl, IN UINT flags)
-{
-	return hkl;
-}
-
-static INT HookShowCursor(BOOL show)
-{
-	if (g_useHostCursor)
-	{
-		return (show) ? 0 : -1;
-	}
-
-	return ShowCursor(show);
 }
 
 BOOL WINAPI SetCursorPosWrap(int X, int Y)
@@ -178,7 +143,7 @@ LRESULT APIENTRY grcWindowProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		return lresult;
 	}
 
-	return origWndProc(hwnd, uMsg, wParam, lParam);
+	return CallWindowProc(origWndProc, hwnd, uMsg, wParam, lParam);
 }
 
 static void RepairInput()
@@ -201,7 +166,7 @@ int LockEnabled()
 	InputHook::QueryMayLockCursor(retval);
 
 	return retval;
-}
+} 
 
 void(__cdecl* g_origLockMouseDevice)(BYTE a1);
 
@@ -239,6 +204,7 @@ static double SetMouseAxisDelta(int input, int32_t axis)
 		}
 	}
 
+	//We are in a menu and don't want to move camera.
 	return 0.0;
 }
 
@@ -269,17 +235,6 @@ static HookFunction hookFunction([]()
 	hook::put<uint8_t>(0x621481, 0x86);
 	hook::put<uint8_t>(0x6214C1, 0x26);*/
 
-	OnGameFrame.Connect([]()
-	{
-		int may = 1;
-		InputHook::QueryMayLockCursor(may);
-
-		if (!may)
-		{
-			ClipCursorWrap(nullptr);
-		}
-	}, -100);
-
 	// window procedure
 	{
 		auto location = hook::get_pattern("C7 44 24 2C 08 00 00 00", 12);
@@ -298,13 +253,10 @@ static HookFunction hookFunction([]()
 	MH_CreateHook(hook::get_pattern("83 3D ? ? ? ? 00 74 7D 80 3D ? ? ? ? 00"), LockMouseDeviceHook, (void**)&g_origLockMouseDevice);
 	MH_EnableHook(MH_ALL_HOOKS);
 
-	// fix repeated ClipCursor calls (causing DWM load)
-	hook::iat("user32.dll", ClipCursorWrap, "ClipCursor");
-	hook::iat("user32.dll", ActivateKeyboardLayoutWrap, "ActiveKeyboardLayout");
 	// don't allow SetCursorPos during focus
 	hook::iat("user32.dll", SetCursorPosWrap, "SetCursorPos");
 	// NUI OS cursors
-	hook::iat("user32.dll", HookShowCursor, "HookShowCursor");
+	hook::iat("user32.dll", HookShowCursor, "ShowCursor");
 
 	{
 		auto location = hook::get_pattern<char>("50 FF 15 ? ? ? ? 5F 5E 5B C3");

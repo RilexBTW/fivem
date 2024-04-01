@@ -12,6 +12,7 @@ const AUTO_REFRESH_INTERVAL = 20 * 1000;
 
 const PLAYER_STATS_FIVEM = 'https://runtime.fivem.net/counts.json';
 const PLAYER_STATS_REDM = 'https://runtime.fivem.net/counts_rdr3.json';
+const PLAYER_STATS_LIBERTYM = 'https://runtime.fivem.net/counts_gta4.json';
 
 export const IPlatformStatusService = defineService<IPlatformStatusService>('PlatformStatusService');
 export type IPlatformStatusService = PlatformStatusService;
@@ -103,9 +104,6 @@ export class PlatformStatusService {
   };
 
   private async fetchServiceNotice() {
-    if (CurrentGameName === GameName.LibertyM) {
-      return  this.setServiceNotice(`<div class="warning">This Is A Non-Official Build Of LibertyM, Some issues may occur.</div>`);
-    }
     try {
       this.setServiceNotice(await fetcher.text(`https://runtime.fivem.net/notice_${CurrentGameName}.html`));
     } catch (e) {
@@ -118,7 +116,7 @@ export class PlatformStatusService {
       const response: [number?, number?, number?] = await fetcher.json(
         currentGameNameIs(GameName.RedM)
           ? PLAYER_STATS_REDM
-          : PLAYER_STATS_FIVEM,
+          : currentGameNameIs(GameName.LibertyM) ? PLAYER_STATS_LIBERTYM : PLAYER_STATS_FIVEM,
       );
       if (!Array.isArray(response)) {
         return;
@@ -131,9 +129,7 @@ export class PlatformStatusService {
 
         return (Math.floor(stat) / 1000).toFixed(1);
       });
-      if (currentGameNameIs(GameName.LibertyM)) {
-        return this.setStats("1", "2");
-      }
+
       this.setStats(current, last24h);
     } catch (e) {
       // noop

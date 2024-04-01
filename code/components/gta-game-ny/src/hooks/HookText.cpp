@@ -26,7 +26,7 @@ const wchar_t* __fastcall CText_GetHook(void* self, void* dummy, const char* tex
 	return g_origGetText(self, dummy, text);
 }
 
-static HookFunction hookFunction([] ()
+static HookFunction hookFunction([]()
 {
 	MH_Initialize();
 	MH_CreateHook(hook::get_pattern("56 8B F1 85 C0 75 3F E8", -0x12), CText_GetHook, (void**)&g_origGetText);

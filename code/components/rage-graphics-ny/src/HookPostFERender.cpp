@@ -61,3 +61,4 @@ static HookFunction hookFunction([] ()
 });
 
 DC_EXPORT fwEvent<bool&> DoWeIgnoreTheFrontend;
+DC_EXPORT fwEvent<> OnPostFrontendRender;

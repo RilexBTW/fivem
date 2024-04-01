@@ -4,6 +4,7 @@
 	"dependencies": [
 		"fx[2]",
 		"rage:graphics:ny",
+		"rage:device:ny",
 		"net",
 		"rage:nutsnbolts:ny"
 	],

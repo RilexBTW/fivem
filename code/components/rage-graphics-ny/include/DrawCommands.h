@@ -108,29 +108,9 @@ void DC_EXPORT SetScissorRect(int, int, int, int);
 
 DC_EXPORT IDirect3DDevice9* GetD3D9Device();
 
-extern
-	#ifdef COMPILING_RAGE_GRAPHICS_NY
-	__declspec(dllexport)
-	#else
-	__declspec(dllimport)
-	#endif
-	fwEvent<> OnGrcBeginScene;
-
-extern
-	#ifdef COMPILING_RAGE_GRAPHICS_NY
-	__declspec(dllexport)
-	#else
-	__declspec(dllimport)
-	#endif
-	fwEvent<> OnGrcEndScene;
-
-extern
-	#ifdef COMPILING_RAGE_GRAPHICS_NY
-	__declspec(dllexport)
-	#else
-	__declspec(dllimport)
-	#endif
-	fwEvent<> OnGrcCreateDevice;
+extern DC_EXPORT fwEvent<> OnGrcBeginScene;
+extern DC_EXPORT fwEvent<> OnGrcEndScene;
+extern DC_EXPORT fwEvent<> OnGrcCreateDevice;
 
 #ifdef COMPILING_RAGE_GRAPHICS_NY
 __declspec(dllexport)
