@@ -16,7 +16,6 @@ static HMONITOR GetPrimaryMonitorHandle()
 	return MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
 }
 
-
 static bool WINAPI MoveWindowCustom(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
 {
 	RECT rect = { X, Y, nWidth, nHeight };
@@ -138,6 +137,9 @@ static HookFunction windowInit([]()
 	// 1.2.0.30: "8A 44 24 0C 88 41 10", 8
 	g_curOption = *hook::get_pattern<CommandLineOption**>("8B 44 24 10 89 41 04 A1", 8);
 	g_noborder = new CommandLineOption("border", "[GRAPHICS] Force disable borderless mode (needs -windowed)");
+
+	//Force disable -managed command line option (Causes crashes related to D3D9)
+	hook::return_function(hook::get_pattern("A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC CC CC CC CC CC CC CC CC CC CC A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC CC CC CC CC CC CC CC CC CC CC A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC CC CC CC CC CC CC CC CC CC CC E9"));
 
 	// default to non-fullscreen mode
 	//hook::put<uint8_t>(0x796BEB, 1);

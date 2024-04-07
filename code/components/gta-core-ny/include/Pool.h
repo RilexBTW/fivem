@@ -31,6 +31,9 @@ public:
 public:
 	void* Allocate();
 
+	//CPool(int size, char* name, int entrySize);
+	//~CPool();
+
 	template<typename T>
 	T* Allocate()
 	{
@@ -123,8 +126,20 @@ public:
 
 	static CPool** ms_pQuadTreePool;
 
+	static CPool** ms_pObjectsPool;
+
+	static CPool** ms_pPedPool;
+	
+	static CPool** ms_pVehiclePool;
+
 public:
 	static inline CPool* GetBuildingPool() { return *ms_pBuildingPool; }
 
 	static inline CPool* GetQuadTreePool() { return *ms_pQuadTreePool; }
+
+	static inline CPool* GetPedPool() { return *ms_pPedPool; }
+
+	static inline CPool* GetObjectsPool() { return *ms_pObjectsPool; }
+
+	static inline CPool* GetVehiclesPool() { return *ms_pVehiclePool; }
 };

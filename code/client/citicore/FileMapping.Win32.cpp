@@ -107,6 +107,13 @@ static std::wstring MapRedirectedFilename(const wchar_t* origFileName)
 		}
 	}
 
+#ifdef GTA_NY
+	if (wcsstr(origFileName, L"MTLX.dll") != nullptr)
+	{
+		return MakeRelativeCitPath("wedontusemtlxheresodontloaditpleasethankyou.dll");
+	}
+#endif
+
 	if (wcsstr(origFileName, L"autosignin.dat") != nullptr)
 	{
 		return MakeRelativeCitPath(L"data\\game-storage\\autosignin.dat");
@@ -116,7 +123,7 @@ static std::wstring MapRedirectedFilename(const wchar_t* origFileName)
 	{
 		return MakeRelativeCitPath(L"data\\game-storage\\signintransfer.dat");
 	}
-
+		
 	if ((wcsstr(origFileName, L"d3dx11_43.dll") != nullptr || wcsstr(origFileName, L"D3DX11_43")) && !g_d3dx11)
 	{
 		return MakeRelativeCitPath(L"bin\\d3dcompiler_43.dll");
@@ -317,6 +324,11 @@ static bool IsMappedFilename(const std::wstring& fileName)
 
 	if (fileName.find(L"Documents\\Rockstar Games") != std::string::npos ||
 		fileName.find(g_rsgDocumentsRoot) != std::string::npos)
+	{
+		return true;
+	}
+
+	if (fileName.find(L"MTLX.dll") != std::string::npos)
 	{
 		return true;
 	}

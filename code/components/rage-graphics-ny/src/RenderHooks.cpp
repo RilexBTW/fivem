@@ -4,7 +4,6 @@
  * See LICENSE and MENTIONS in the root of the source tree for information
  * regarding licensing.
  */
-
 #include "StdInc.h"
 #include "DrawCommands.h"
 #include "Hooking.h"
@@ -15,9 +14,53 @@
 #include <ReverseGameData.h>
 #include <CrossBuildRuntime.h>
 
+#include <Error.h>
+#include <dxgi1_4.h>
+#include <dxgi1_5.h>
+#include <dxgi1_6.h>
+#include <wrl.h>
+#pragma comment(lib, "dxgi.lib")
+namespace WRL = Microsoft::WRL;
+
 fwEvent<> OnGrcCreateDevice;
 fwEvent<> OnGrcBeginScene;
 fwEvent<> OnGrcEndScene;
+
+static void RegisterPrimaryGPU()
+{
+	{
+		std::vector<std::string> gpuList;
+
+		IDXGIAdapter4* pAdapter = nullptr;
+		IDXGIFactory6* pFactory = nullptr;
+		HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory6), (void**)&pFactory);
+
+		if (SUCCEEDED(hr))
+		{
+			for (UINT adapterIndex = 0; 
+				DXGI_ERROR_NOT_FOUND != pFactory->EnumAdapterByGpuPreference(adapterIndex, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, __uuidof(IDXGIAdapter4), (void**)&pAdapter); 
+				adapterIndex++)
+			{
+				DXGI_ADAPTER_DESC1 desc;
+				pAdapter->GetDesc1(&desc);
+
+				if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+				{
+					// Don't select the Basic Render Driver adapter.
+					continue;
+				}
+
+
+				static auto _ = ([&desc]
+				{
+					AddCrashometry("gpu_name", "%s", ToNarrow(desc.Description));
+					AddCrashometry("gpu_id", "%04x:%04x", desc.VendorId, desc.DeviceId);
+					return true;
+				})();
+			}
+		}
+	}
+}
 
 class IDirect3D9DeviceProxy : public IDirect3DDevice9
 {
@@ -512,11 +555,7 @@ public:
 	}
 };
 
-static IDirect3D9* (*g_origDirect3DCreate9)(
-	UINT SDKVersion
-);
-
-static IDirect3D9* (WINAPI* Direct3DCreate9_t)(UINT);
+static IDirect3D9* (WINAPI* g_origDirect3DCreate9)(UINT);
 
 class IDirect3D9Proxy : public IDirect3D9
 {
@@ -529,7 +568,7 @@ public:
 
 	static LPDIRECT3D9 WINAPI HookCreateDirect3D9(UINT SDKVersion)
 	{
-		LPDIRECT3D9 pD3D = Direct3DCreate9_t(SDKVersion);
+		LPDIRECT3D9 pD3D = g_origDirect3DCreate9(SDKVersion);
 		if (!pD3D)
 		{
 			return nullptr;
@@ -623,6 +662,7 @@ public:
 
 		if (SUCCEEDED(result))
 		{
+			RegisterPrimaryGPU();
 			OnGrcCreateDevice();
 			*ppReturnedDeviceInterface = new IDirect3D9DeviceProxy(*ppReturnedDeviceInterface);
 		}
@@ -749,7 +789,7 @@ static HookFunction hookFunction([]()
 	*/
 
 	// Replace Direct3DCreate with our own stub device
-	Direct3DCreate9_t = hook::iat("d3d9.dll", IDirect3D9Proxy::HookCreateDirect3D9, "Direct3DCreate9");
+	g_origDirect3DCreate9 = hook::iat("d3d9.dll", IDirect3D9Proxy::HookCreateDirect3D9, "Direct3DCreate9");
 
 	// Handle pre, post and D3D Reset failures
 	hook::jump(hook::get_pattern("83 C0 10 3D 00 10 00 00", 22), PreAndPostD3DReset);

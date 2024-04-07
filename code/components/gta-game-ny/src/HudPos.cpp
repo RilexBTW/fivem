@@ -91,7 +91,6 @@ HudPosition* HudPositions::GetPosition(const char* name)
 	return GetPosition(it->second);
 }
 
-
 static HookFunction hookFunc([]()
 {
 	HudPositions::ms_hudPositions = *hook::get_pattern<HudPosition*>("6A 05 8B 04 03 05 C8 04 00 00", 19);

@@ -4,6 +4,7 @@
 #include "Hooking.h"
 #include "CrossLibraryInterfaces.h"
 
+#include <CoreConsole.h>
 #include <ICoreGameInit.h>
 
 static bool* g_preventSaveLoading;
@@ -304,8 +305,13 @@ static InitFunction initFunction([]()
 			g_netLibrary->RunFrame();
 		});
 	});
-});
 
+	static ConsoleCommand crashCmd("_crash", []()
+	{
+		*(volatile int*)0 = 0;
+	});
+});
+ 
 static HookFunction hookFunction([]()
 {
 	reloadGameNextFrame = *(bool**)(hook::get_call(hook::get_pattern<char>("6a 00 6a 20 6a 01 50 6a 00", 50)) + 0x16);
@@ -319,7 +325,6 @@ static HookFunction hookFunction([]()
 	hook::nop(hook::get_pattern("83 3D ? ? ? ? 01 C6 05 ? ? ? ? 00", -71), 5);
 
 	// hook to reset processing the game after our load caller finishes
-	//hook::jump(0x420FA2, ToggleBackGameProcess);
 	{
 		auto location = hook::get_pattern("6A 00 68 FF 00 00 00 68 E8 03 00 00 B9", 17);
 		hook::set_call(&origToggleBack, location);
@@ -331,7 +336,6 @@ static HookFunction hookFunction([]()
 
 	// LoadGameNow argument 'reload game fully, even if episodes didn't change' in one caller, to be specific the one we actually use indirectly above as the script flag uses it
 	/*hook::put<uint8_t>(0x420F91, true);
-
 	// other callers for this stuff
 	hook::put<uint8_t>(0x420FD9, 1);
 	hook::put<uint8_t>(0x420EAB, 1);

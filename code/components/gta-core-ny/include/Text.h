@@ -7,24 +7,31 @@
 
 #pragma once
 
-#ifndef GTACORE_EXPORT
+#ifndef GTA_CORE_EXPORT
 #ifdef COMPILING_GTA_CORE_NY
-#define GTACORE_EXPORT __declspec(dllexport)
+#define GTA_CORE_EXPORT __declspec(dllexport)
 #else
-#define GTACORE_EXPORT __declspec(dllimport)
+#define GTA_CORE_EXPORT __declspec(dllimport)
 #endif
 #endif
 
-class GTACORE_EXPORT CText
+namespace game
+{
+	void GTA_CORE_EXPORT AddCustomText(const std::string& key, const std::string& value);
+
+	void GTA_CORE_EXPORT AddCustomText(uint32_t hash, const std::string& value);
+
+	void GTA_CORE_EXPORT RemoveCustomText(uint32_t hash);
+}
+
+class GTA_CORE_EXPORT CText
 {
 public:
 	const wchar_t* Get(const char* key);
-
-	const wchar_t* GetCustom(const char* key);
 
 	void SetCustom(const char* key, const wchar_t* value);
 
 	void SetCustom(uint32_t key, const wchar_t* value);
 };
 
-extern GTACORE_EXPORT CText* TheText;
+extern GTA_CORE_EXPORT CText* TheText;

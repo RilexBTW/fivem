@@ -1,7 +1,14 @@
+/*
+ * This file is part of the CitizenFX project - http://citizen.re/
+ *
+ * See LICENSE and MENTIONS in the root of the source tree for information
+ * regarding licensing.
+ */
 #include "StdInc.h"
+#include <Hooking.h>
 
 static HANDLE WINAPI CreateThreadWrapper(_In_opt_ LPSECURITY_ATTRIBUTES lpThreadAttributes, _In_ SIZE_T dwStackSize, _In_ LPTHREAD_START_ROUTINE lpStartAddress,
-								  _In_opt_ __drv_aliasesMem LPVOID lpParameter, _In_ DWORD dwCreationFlags, _Out_opt_ LPDWORD lpThreadId)
+	_In_opt_ __drv_aliasesMem LPVOID lpParameter, _In_ DWORD dwCreationFlags, _Out_opt_ LPDWORD lpThreadId)
 {
 	// find the name parameter by frobbling the parent stack
 	char* parentStackPtr = reinterpret_cast<char*>(_AddressOfReturnAddress());
@@ -39,7 +46,7 @@ static HANDLE WINAPI CreateThreadWrapper(_In_opt_ LPSECURITY_ATTRIBUTES lpThread
 	return hThread;
 }
 
-static HookFunction hookFunction([] ()
+static HookFunction hookFunction([]()
 {
 	// RAGE thread creation function: CreateThread call
 	void* createThread = hook::get_pattern("56 6A 00 C7 44 24 2C 00 00 00 00", 11);

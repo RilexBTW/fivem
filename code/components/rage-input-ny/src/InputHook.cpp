@@ -182,26 +182,22 @@ static void __cdecl LockMouseDeviceHook(BYTE a1)
 
 static int32_t* mouseAxisX;
 static int32_t* mouseAxisY;
+static bool* isMenuActive;
 
 static double SetMouseAxisDelta(int input, int32_t axis)
 {
-	if (!input || !(axis == 0 || axis == 1))
+	if (!input || !(axis == 0 || axis == 1) || (isMenuActive && *isMenuActive))
 	{
 		return 0.0;
 	}
 
-	const float& delta = std::clamp(((float)(uint8_t)(*(uint8_t*)(input + 4) ^ *(uint8_t*)(input + 6)) - 127.5f) * 0.0078431377f, -1.0f, 1.0f);
-
-	if (fabs(delta) > 0.0039215689f)
+	if (axis == 0)
 	{
-		if (axis == 0)
-		{
-			return (float) *mouseAxisX * 0.0078125;
-		}
-		else if (axis == 1)
-		{
-			return (float) *mouseAxisY * 0.0078125;
-		}
+		return (float)*mouseAxisX * 0.0078125;
+	}
+	else if (axis == 1)
+	{
+		return (float)*mouseAxisY * 0.0078125;
 	}
 
 	//We are in a menu and don't want to move camera.
@@ -271,13 +267,15 @@ static HookFunction hookFunction([]()
 	}
 
 	{
+		auto pattern = hook::pattern("80 3D ? ? ? ? ? 74 4B E8 ? ? ? ? 84 C0");
+		isMenuActive = *pattern.get_first<bool*>(2);
 		auto location = hook::get_pattern<char>("51 8B 54 24 0C C7 04 24 00 00 00 00");
 		hook::jump(location, SetMouseAxisDelta);
 		mouseAxisX = *(int32_t**)(location + 0x12);
 		mouseAxisY = *(int32_t**)(location + 0x28);
 	}
 
-	// RGSC UI hook for overlay checking (on QueryInterface)
+	// RGSC UI hook for overlay checking (on QueryInterface)	
 	{
 		auto location = hook::get_pattern(xbr::IsGameBuildOrGreater<59>() ? "51 FF 10 85 C0 0F 85 ? ? ? ? 8B 0D" : "51 FF 10 85 C0 0F 85 41 02 00 00", 1);
 		hook::nop(location, 10);

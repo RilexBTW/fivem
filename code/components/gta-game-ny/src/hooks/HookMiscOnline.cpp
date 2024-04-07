@@ -4,32 +4,11 @@
 
 static HookFunction hookFunction([] ()
 {
-#if 0
-	// RGSC userinfo.dat return 1
-	hook::put<uint8_t>(0x7B05C0, 0xB8);
-	hook::put<uint32_t>(0x7B05C1, 1);
-	hook::put<uint8_t>(0x7B05C5, 0xC3);
-
-	// lie about being connected online to prevent slowness
-	hook::nop(0x7AF1B7, 2);
-
-	// don't do some random 'TV health check' over HTTP
-	hook::return_function(0x87FC60);
-
-	// ignore checking for XNADDR/related data during the connection request
-	hook::put<uint8_t>(0x541221, 0xB8);
-	hook::put<uint32_t>(0x541222, 1);
-
-	// try not to do dxdiag api stuff, it sucks and is slow
-	hook::put<uint32_t>(0x10C4368, 0);
-
-	// single-use/instance mutex
-	hook::nop(0x5AACB5, 2);
-	hook::put<uint8_t>(0x5AACBC, 0xEB);
-#endif
-
 	// don't unload streamed fonts - this crashes the pause menu
 	hook::return_function(hook::get_pattern("83 3D ? ? ? ? FF 74 ? 6A FF"));
+
+	// function which maintains counters related to MP_WARNING_5/MP_WARNING_6 messages; which are 'too slowly' and 'run out of streaming memory' disconnects
+	hook::return_function(hook::get_pattern("8B EA 56 8A F1 57", -0x08));
 
 	// ignore initial loading screens
 	//hook::put<uint8_t>(hook::get_pattern("74 ? 80 3D ? ? ? ? ? 74 ? E8 ? ? ? ? 0F B6 05"), 0XEB);

@@ -37,7 +37,6 @@ class DC_EXPORT_VMT CImplementedDC : public CBaseDC
 {
 protected:
 	CImplementedDC();
-
 public:
 	virtual ~CImplementedDC();
 
@@ -59,7 +58,6 @@ class DC_EXPORT_VMT CGenericDC : public CImplementedDC
 {
 private:
 	char pad[8];
-
 public:
 	CGenericDC(void(*cb)());
 };
@@ -68,7 +66,6 @@ class DC_EXPORT_VMT CGenericDC1Arg : public CImplementedDC
 {
 private:
 	char pad[12];
-
 public:
 	CGenericDC1Arg(void(*cb)(int arg), int* arg);
 };
@@ -109,16 +106,18 @@ void DC_EXPORT SetScissorRect(int, int, int, int);
 DC_EXPORT IDirect3DDevice9* GetD3D9Device();
 
 extern DC_EXPORT fwEvent<> OnGrcBeginScene;
+
 extern DC_EXPORT fwEvent<> OnGrcEndScene;
+
 extern DC_EXPORT fwEvent<> OnGrcCreateDevice;
 
-#ifdef COMPILING_RAGE_GRAPHICS_NY
-__declspec(dllexport)
-#endif
-	void GetGameResolution(int& width, int& height);
-
 extern DC_EXPORT fwEvent<> OnPostFrontendRender;
+
 extern DC_EXPORT fwEvent<bool&> DoWeIgnoreTheFrontend;
+
+DC_EXPORT void GetGameResolution(int& width, int& height);
+
+
 
 
 #define _HAS_DWITF 1
