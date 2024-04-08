@@ -1,9 +1,6 @@
 [submodule "vendor/jitasm"]
 	path = vendor/jitasm
 	url = https://github.com/citizenfx/jitasm.git
-[submodule "vendor/yaml-cpp"]
-	path = vendor/yaml-cpp
-	url = https://github.com/jbeder/yaml-cpp.git
 [submodule "vendor/msgpack-c"]
 	path = vendor/msgpack-c
 	url = https://github.com/msgpack/msgpack-c.git
@@ -25,9 +22,6 @@
 [submodule "vendor/picohttpparser"]
 	path = vendor/picohttpparser
 	url = https://github.com/h2o/picohttpparser.git
-[submodule "vendor/libssh"]
-	path = vendor/libssh
-	url = https://github.com/citizenfx/libssh.git
 [submodule "vendor/xz"]
 	path = vendor/xz
 	url = https://github.com/xz-mirror/xz.git
@@ -68,9 +62,6 @@
 [submodule "vendor/cpprestsdk"]
 	path = vendor/cpprestsdk
 	url = https://github.com/Microsoft/cpprestsdk.git
-[submodule "vendor/linenoise-ng"]
-	path = vendor/linenoise-ng
-	url = https://github.com/arangodb/linenoise-ng.git
 [submodule "vendor/discord-rpc"]
 	path = vendor/discord-rpc
 	url = https://github.com/citizenfx/discord-rpc.git
@@ -107,27 +98,12 @@
 [submodule "vendor/utfcpp"]
 	path = vendor/utfcpp
 	url = https://github.com/nemtrif/utfcpp.git
-[submodule "vendor/yojimbo"]
-	path = vendor/yojimbo
-	url = https://github.com/citizenfx/yojimbo.git
-[submodule "vendor/libsodium"]
-	path = vendor/libsodium
-	url = https://github.com/jedisct1/libsodium.git
 [submodule "vendor/mbedtls"]
 	path = vendor/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
-[submodule "vendor/netcode.io"]
-	path = vendor/netcode.io
-	url = https://github.com/citizenfx/netcode.io.git
-[submodule "vendor/reliable.io"]
-	path = vendor/reliable.io
-	url = https://github.com/citizenfx/reliable.io.git
 [submodule "vendor/websocketpp"]
 	path = vendor/websocketpp
 	url = https://github.com/citizenfx/websocketpp.git
-[submodule "vendor/slikenet"]
-	path = vendor/slikenet
-	url = https://github.com/SLikeSoft/SLikeNet.git
 [submodule "vendor/replxx"]
 	path = vendor/replxx
 	url = https://github.com/blattersturm/replxx.git
@@ -167,12 +143,6 @@
 [submodule "vendor/vulkan-headers"]
 	path = vendor/vulkan-headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
-[submodule "vendor/librw"]
-	path = vendor/librw
-	url = https://github.com/blattersturm/librw.git
-[submodule "vendor/librwgta"]
-	path = vendor/librwgta
-	url = https://github.com/aap/librwgta.git
 [submodule "vendor/labsound"]
 	path = vendor/labsound
 	url = https://github.com/LabSound/LabSound
