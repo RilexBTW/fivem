@@ -556,7 +556,7 @@ public:
 
 	inline void RemoveFromScene()
 	{
-		FORWARD_FUNC(AddToSceneWrap, 0x120);
+		FORWARD_FUNC(RemoveFromScene, 0x120);
 	}
 
 	inline float GetRadius()
@@ -622,6 +622,22 @@ private:
 	uint8_t m_numSeats;
 
 	fwEntity* m_occupants[16];
+};
+
+STREAMING_EXPORT class CItemInfo : public rage::fwRefAwareBase
+{
+public:
+	inline uint32_t GetName() const
+	{
+		return m_name;
+	}
+
+private:
+	char m_pad[8]; // #TODO: fwRefAwareBase needs updating
+	uint32_t m_name;
+	uint32_t m_model;
+	uint32_t m_audio;
+	uint32_t m_slot;
 };
 
 struct CHandlingObject
