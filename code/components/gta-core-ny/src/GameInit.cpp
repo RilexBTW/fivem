@@ -1,6 +1,6 @@
 #include "StdInc.h"
 #include "GameInit.h"
-#include "Text.h"
+#include "CustomText.h"
 #include "Hooking.h"
 #include "CrossLibraryInterfaces.h"
 

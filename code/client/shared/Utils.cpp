@@ -154,9 +154,7 @@ inline void AsyncTrace(const char* string)
 
 	if (!func)
 	{
-#ifndef GTA_NY
 		func = (TCoreTraceFunc)GetProcAddress(GetModuleHandle(NULL), "AsyncTrace");
-#endif		
 		if (!func)
 		{
 			// try getting function proxy from CoreRT, could be we've already loaded a game

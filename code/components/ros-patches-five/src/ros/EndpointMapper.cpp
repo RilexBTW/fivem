@@ -31,11 +31,7 @@ void EndpointMapper::AddGameService(const std::string& serviceName, const TGameS
 
 bool EndpointMapper::HandleRequest(fwRefContainer<net::HttpRequest> request, fwRefContainer<net::HttpResponse> response)
 {
-#ifdef GTA_NY
-	trace("%s: %s %s\n", __FUNCTION__, request->GetRequestMethod().c_str(), request->GetPath().c_str());
-#elif
 	console::DPrintf("ros", __FUNCTION__ ": %s %s\n", request->GetRequestMethod().c_str(), request->GetPath().c_str());
-#endif
 
 	for (auto& prefixEntry : m_prefixes)
 	{

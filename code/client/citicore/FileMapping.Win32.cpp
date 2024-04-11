@@ -488,7 +488,7 @@ static BOOL WINAPI GetFileVersionInfoWStub(_In_ LPCWSTR lptstrFilename, _Reserve
 		{
 #ifdef GTA_NY
 			g_nextFileVersion = { 2, 0, 7, 9 };
-#elif
+#else
 			g_nextFileVersion = { 2, 0, 9, 0 };
 #endif
 		}
@@ -496,7 +496,7 @@ static BOOL WINAPI GetFileVersionInfoWStub(_In_ LPCWSTR lptstrFilename, _Reserve
 		{
 #ifdef GTA_NY
 			g_nextFileVersion = { 83, 5, 0, 0 };
-#elif
+#else
 			g_nextFileVersion = { 85, 3, 9, 0 };
 #endif
 		}

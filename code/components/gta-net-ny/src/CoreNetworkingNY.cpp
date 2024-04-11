@@ -180,8 +180,8 @@ static bool __stdcall ReadSession(void* parTree, rage::rlSessionInfo* session)
 	address->publicAddr.port = 6672;
 	address->rockstarAccountId = g_netLibrary->GetHostNetID();
 
-	uint8_t sessionBlob[69];
-	size_t l = 0;
+	//uint8_t sessionBlob[69];
+	//size_t l = 0;
 	// .43
 	//((void(__thiscall*)(rage::rlSessionInfo*, uint8_t*, size_t, size_t*))0x6C8560)(session, sessionBlob, 69, &l);
 	//trace("tryna join %s\n", Botan::base64_encode(sessionBlob, l));
@@ -202,29 +202,6 @@ static int g_localAddress = getenv("COMPUTERNAME")[0] == 'F' ? 1 : 2;
 bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 {
 	auto success = g_origGetLocalPeerAddress(address);
-
-	/*if (getenv("ROS_TEMP_LAN_IP"))
-	{
-		auto a = htonl(inet_addr(getenv("ROS_TEMP_LAN_IP")));;
-		auto b = 6672;
-
-		if (wcsstr(GetCommandLine(), L"cl2"))
-		{
-			a = htonl(inet_addr("127.0.0.1"));
-			b = 6673;
-		}
-
-		out->lanIP = a;
-		out->onlineIP = a;
-		out->unkIP = a;
-		out->lanPort = b;
-		out->onlinePort = b;
-		out->unkPort = b;
-	}
-
-	//out->unkIP = GetTickCount(); // kinda shitty but irrelevant later
-
-	return success;*/
 
 	// .43 & .59
 	hook::put<uint8_t>(0x18B82CC, 1);
@@ -251,8 +228,6 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 		onlineAddress2->port1 = onlineAddress2->port2 = 6672;
 	}
 
-	//memset(address, 0, sizeof(*address));
-
 	address->secKeyTime = g_netLibrary->GetServerBase() ^ 0xABCD;
 	address->unkKey1 = g_netLibrary->GetServerBase();
 	address->unkKey2 = g_netLibrary->GetServerBase();
@@ -262,12 +237,6 @@ bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
  	address->relayAddr.port = 6672;
  	address->publicAddr.ip.addr = (g_netLibrary->GetServerNetID() ^ 0xFEED) | 0xc0a80000;
  	address->publicAddr.port = 6672;
-	/*address->localAddr.ip.addr = (g_localAddress ^ 0xFEED) | 0xc0a80000;
-	address->localAddr.port = 6672;
-	address->relayAddr.ip.addr = (g_localAddress ^ 0xFEED) | 0xc0a80000;
-	address->relayAddr.port = 6672;
-	address->publicAddr.ip.addr = (g_localAddress ^ 0xFEED) | 0xc0a80000;
-	address->publicAddr.port = 6672;*/
 	address->rockstarAccountId = g_netLibrary->GetServerNetID();
 
 	return true;
@@ -282,6 +251,8 @@ void SocketInitHook()
 	hook::put<uint8_t>(hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2), 1);
 	//**hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2) = 1;
 
+	static auto connectionMgrPtr = *hook::get_pattern<void*>("8B 01 6A 07 68", 5);
+
 	static auto onRelayReceived = ((void(__thiscall*)(void*, void*))hook::get_pattern("8B 44 24 04 83 78 20 02"));
 	static auto onSocketEventReceiveThreadTicked = ((void(__thiscall*)(void*, void*))hook::get_pattern("83 78 20 04 8B F1", -5));
 	static auto receiveWrap = ((int(__thiscall*)(rage::netSocket*, void* address, void* buf, size_t len, int* outErr))hook::get_pattern("83 EC 1C 53 55 8B E9 56 83 7D 04"));
@@ -295,8 +266,6 @@ void SocketInitHook()
 
 	OnGameFrame.Connect([]()
 	{
-		static auto connectionMgrPtr = *hook::get_pattern<void*>("8b 01 6A 07 68", 5);
-
 		uint8_t from[8]; // actually: netSocketAddress
 		uint8_t buf[1400];
 
@@ -339,7 +308,6 @@ void SocketInitHook()
 	g_origSocketInit();
 }
 
-//IS_THIS_MACHINE_THE_SERVER
 static hook::cdecl_stub<bool()> isNetworkHost([]()
 {
 	return hook::get_call(*hook::get_pattern<void*>("68 00 16 5E 2E", -4));

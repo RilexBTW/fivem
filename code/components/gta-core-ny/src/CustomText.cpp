@@ -12,7 +12,7 @@
 #include <stack>
 #include <shared_mutex>
 
-#include <Text.h>
+#include <CustomText.h>
 
 CText* TheText;
 
