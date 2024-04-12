@@ -7,11 +7,14 @@
 
 #include "StdInc.h"
 #include "Streaming.h"
+#include "fiDevice.h"
 
 #include <Error.h>
 #include <Hooking.h>
-
-//uint32_t WRAPPER CStreamingInfoManager::registerIMGFile(const char* name, uint32_t offset, uint32_t size, uint8_t imgNum, uint32_t index, uint32_t resourceType) { EAXJMP(0xBCC2E0); }
+#include <Resource.h>
+#include <ResourceManager.h>
+#include <ResourceEventComponent.h>
+#include <ICoreGameInit.h>
 
 CStreamingInfoManager* CStreamingInfoManager::GetInstance()
 {
@@ -22,6 +25,34 @@ CStreamingInfoManager* CStreamingInfoManager::GetInstance()
 StreamingItem** g_streamingItems;
 int* g_nextStreamingItem;
 uint32_t* g_streamMask;
+
+static hook::cdecl_stub<void* (const char*, int)> _loadContentFile([]()
+{
+	return hook::get_pattern("81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68");
+});
+
+//TODO: this should probably be called from an data_file entry in fxmanifest.
+static InitFunction initFunc([]()
+{
+	fx::Resource::OnInitializeInstance.Connect([](fx::Resource* resource)
+	{
+		resource->OnStart.Connect([resource]()
+		{
+				auto contentPath = resource->GetPath() + "content.dat";
+				rage::fiDevice* device = rage::fiDevice::GetDevice(contentPath.c_str(), true);
+
+				if (device)
+				{
+					uint32_t handle = device->Open(contentPath.c_str(), true);
+					if (handle != 0xFFFFFFFF)
+					{
+						device->Close(handle);
+						_loadContentFile(va("%s", contentPath.c_str()), 0);
+					}
+				}
+		});
+	});
+});
 
 static HookFunction hookFunc([]()
 {

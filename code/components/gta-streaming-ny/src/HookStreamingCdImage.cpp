@@ -17,10 +17,8 @@ static hook::thiscall_stub<uint32_t(CStreamingInfoManager*, const char*, uint32_
 uint32_t CStreamingInfoManager::registerIMGFile(const char* name, uint32_t offset, uint32_t size, uint8_t imgNum, uint32_t index, uint32_t resourceType)
 {
 	return _registerImgFile(this, name, offset, size, imgNum, index, resourceType);
-	//EAXJMP(0xBCC2E0);
 }
 
-// #TODOLIBERTY:
 #if 0
 struct ImgFileData
 {
@@ -41,7 +39,8 @@ struct ImgArchiveData
 void PreLoadImgArchives()
 {
 	// first copy someone's img data to have something to work with
-	ImgArchiveData* archiveData = (ImgArchiveData*)(0x121DFD8);
+	//TODO: Pattern
+	ImgArchiveData* archiveData = (ImgArchiveData*)(0x012FB3B8);
 
 	memcpy(&archiveData[0xFE], &archiveData[0], sizeof(*archiveData));
 	archiveData[0xFE].doesIPL = -1;
@@ -105,12 +104,7 @@ public:
 
 		if (handle < (INT32_MAX / 2))
 		{
-			/*if (handle == (1056 + streamingTypes.types[*(int*)0x15F73A0].startIndex))
-			{
-				__asm int 3
-			}*/
-
-			if (CStreamingInfoManager::GetInstance()->fileDatas[handle].imgIndex != 0xFE)
+			if (CStreamingInfoManager::GetInstance()->Entries[handle].handle.imgIndex != 0xFE)
 			{
 				return origOpenBulk(this, fileName, ptr);
 			}
@@ -146,29 +140,22 @@ public:
 
 static HookFunction hookFunction([] ()
 {
-	hook::jump(0x897DD0, PreLoadImgArchives1Stub);
-	hook::call(0x897D9E, PreLoadImgArchives2Stub);
-
-	/*DWORD funcPtr;
-	__asm mov funcPtr, offset fiStreamingDevice::openBulkImpl*/
+	//hook::jump(0x897DD0, PreLoadImgArchives1Stub);
+	//hook::call(0x897D9E, PreLoadImgArchives2Stub);
 
 	auto openBulk = hook::get_member(&fiStreamingDevice::openBulkImpl);
 
-	origOpenBulk = *(openBulk_t*)(0xD68994);
-	hook::put(0xD68994, openBulk);
-
-	//__asm mov funcPtr, offset fiStreamingDevice::readBulkImpl
+	origOpenBulk = *(openBulk_t*)(0x00EA36CC);
+	hook::put(0x00EA36CC, openBulk);
 
 	auto readBulk = hook::get_member(&fiStreamingDevice::readBulkImpl);
 
-	origReadBulk = *(readBulk_t*)(0xD689A4);
-	hook::put(0xD689A4, readBulk);
-
-	//__asm mov funcPtr, offset fiStreamingDevice::closeBulkImpl
+	origReadBulk = *(readBulk_t*)(0x00EA36DC);
+	hook::put(0x00EA36DC, readBulk);
 
 	auto closeBulk = hook::get_member(&fiStreamingDevice::closeBulkImpl);
 	hook::put(0xD689B8, closeBulk);
 
-	hook::put(0xD68A20, CreateFakeEntriesOnLoad);
+	//hook::put(0xD68A20, CreateFakeEntriesOnLoad);
 });
 #endif

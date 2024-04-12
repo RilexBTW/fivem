@@ -281,6 +281,12 @@ static void StreamingInfoInit()
 	}
 }
 
+
+//Attach content.dat file
+// 81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68
+
+//Attach audio file 
+// 51 A1 ? ? ? ? 85 C0 74
 static HookFunction hookFunction([]()
 {
 	MH_Initialize();

@@ -77,6 +77,20 @@ struct StreamingItem
 	void completeRequest();
 };
 
+class StreamingFile
+{
+public:
+	virtual ~StreamingFile();
+
+	virtual void Open() = 0;
+
+	virtual uint32_t Read(uint64_t ptr, void* buffer, uint32_t toRead) = 0;
+
+	virtual void Close() = 0;
+
+	virtual uint32_t GetUniqueIdentifier() = 0;
+};
+
 extern StreamingItem** g_streamingItems;
 extern int* g_nextStreamingItem;
 extern uint32_t* g_streamMask;
@@ -225,6 +239,28 @@ public:
 
 StreamThread* GetStreamThread(int id);
 #endif
+
+class StreamingModule
+{
+public:
+	virtual void ScanEntries() = 0;
+
+	virtual StreamingFile* GetEntryFromIndex(uint32_t handle) = 0;
+};
+
+class CStreaming
+{
+public:
+	static void ScanImgEntries();
+
+	static uint32_t OpenImgEntry(uint32_t handle);
+
+	static StreamingFile* GetImgEntry(uint32_t handle);
+
+	static uint32_t CloseImgEntry(uint32_t handle);
+
+	static void SetStreamingModule(void* module);
+};
 
 #if 0
 #include "ResourceCache.h"
