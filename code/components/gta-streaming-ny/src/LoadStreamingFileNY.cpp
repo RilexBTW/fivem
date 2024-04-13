@@ -3,6 +3,7 @@
 
 #include <Streaming.h>
 
+#include <ICoreGameInit.h>
 #include <nutsnbolts.h>
 #include <MinHook.h>
 
@@ -36,6 +37,8 @@ void DLL_EXPORT CfxCollection_SetStreamingLoadLocked(bool locked)
 
 static std::vector<std::pair<std::string, std::string>> g_dataFiles;
 
+static void LoadDataFiles();
+
 namespace streaming
 {
 	void DLL_EXPORT AddMetaToLoadList(bool before, const std::string& meta)
@@ -51,6 +54,10 @@ namespace streaming
 	void DLL_EXPORT AddDataFileToLoadList(const std::string& type, const std::string& path)
 	{
 		g_dataFiles.push_back({ type, path });
+		if (Instance<ICoreGameInit>::Get()->GetGameLoaded() && !Instance<ICoreGameInit>::Get()->HasVariable("gameKilled"))
+		{
+			LoadDataFiles();
+		}
 	}
 
 	void DLL_EXPORT RemoveDataFileFromLoadList(const std::string& type, const std::string& path)
@@ -253,18 +260,57 @@ static bool __stdcall _openStreamHandleHook(Req* req)
 	return (handle != -1);
 }
 
+static hook::cdecl_stub<void* (const char*, int)> _loadContentFile([]()
+{
+	return hook::get_pattern("81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68");
+});
+
+static hook::cdecl_stub<void* (const char*, bool)> _loadAudioMetadata([]()
+{
+	return hook::get_pattern("51 A1 ? ? ? ? 85 C0 74");
+});
+
+static hook::cdecl_stub<void* (const char*, char, int)> _addImgFile([]()
+{
+	return hook::get_pattern("83 EC ? A1 ? ? ? ? 53 56 C6 44 24");
+});
+
 static void(__thiscall* dataFileMgr_addDlcLine)(void*, const char* line);
 static void** g_dataFileMgr;
+
+static void LoadDataFiles()
+{
+	trace("Loading mounted data files (total: %d)\n", g_dataFiles.size());
+
+	for (auto& [type, value] : g_dataFiles)
+	{
+		auto hash = HashString(type);
+
+		switch (hash)
+		{
+		case HashString("CONTENTDATA"):
+			_loadContentFile(value.c_str(), 0);
+			break;
+		case HashString("AUDIOMETADATA"):
+			_loadAudioMetadata(value.c_str(), false);
+			break;
+		case HashString("IMG"):
+			_addImgFile(value.c_str(), 1, -1);
+			break;
+		default:
+			dataFileMgr_addDlcLine(*g_dataFileMgr, va("%s %s", type, value));
+			break;
+		}
+	}
+
+	g_dataFiles.clear();
+}
 
 static void(__thiscall* g_origLoadDlcDataFiles)(void*);
 void __fastcall LoadDataFilesOnDlc(void* self)
 {
 	g_origLoadDlcDataFiles(self);
-
-	for (auto& [type, value] : g_dataFiles)
-	{
-		dataFileMgr_addDlcLine(*g_dataFileMgr, va("%s %s", type, value));
-	}
+	LoadDataFiles();
 }
 
 static void(*g_origStreamingInfoInit)();
@@ -284,7 +330,8 @@ static void StreamingInfoInit()
 
 //Attach content.dat file
 // 81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68
-
+//Add IMG File
+// 83 EC ? A1 ? ? ? ? 53 56 C6 44 24
 //Attach audio file 
 // 51 A1 ? ? ? ? 85 C0 74
 static HookFunction hookFunction([]()
@@ -296,7 +343,7 @@ static HookFunction hookFunction([]()
 	// don't do img bd/hdd (or layer) check
 	{
 		auto location = hook::get_pattern<char>("75 0C 66 8B 43 0E");
-		hook::nop(location, 2);
+			hook::nop(location, 2);
 		hook::put<uint8_t>(location + 12, 0xEB);
 	}
 
