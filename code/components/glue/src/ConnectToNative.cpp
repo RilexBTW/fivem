@@ -100,7 +100,7 @@ static void SaveBuildNumber(uint32_t build)
 
 void RestartGameToOtherBuild(int build, int pureLevel)
 {
-#if defined(GTA_FIVE) || defined(IS_RDR3)
+#if defined(GTA_FIVE) || defined(IS_RDR3) || defined(GTA_NY)
 	SECURITY_ATTRIBUTES securityAttributes = { 0 };
 	securityAttributes.bInheritHandle = TRUE;
 
@@ -120,6 +120,8 @@ void RestartGameToOtherBuild(int build, int pureLevel)
 	1604
 #elif defined(IS_RDR3)
 	1311
+#elif defined(GTA_NY)
+	59
 #else
 	0
 #endif
@@ -1036,7 +1038,7 @@ static InitFunction initFunction([] ()
 		{
 			static bool done = ([]
 			{
-#ifdef GTA_FIVE
+#ifdef GTA_NY
 				std::thread([]
 				{
 					UiDone();

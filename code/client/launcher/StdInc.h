@@ -141,9 +141,7 @@ bool CheckFileOutdatedWithUI(const wchar_t* fileName, const std::vector<std::arr
 #define LAUNCHER_PERSONALITY_GAME
 #endif
 #elif defined(GTA_NY)
-#ifdef LAUNCHER_PERSONALITY_GAME_43
-#define LAUNCHER_PERSONALITY_GAME
-#elif defined(LAUNCHER_PERSONALITY_GAME_59)
+#ifdef LAUNCHER_PERSONALITY_GAME_59
 #define LAUNCHER_PERSONALITY_GAME
 #endif
 #endif
@@ -154,3 +152,4 @@ struct TenUIBase
 };
 
 std::unique_ptr<TenUIBase> UI_InitTen();
+ 

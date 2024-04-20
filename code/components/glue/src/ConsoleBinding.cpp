@@ -15,7 +15,7 @@
 #elif defined(GTA_FIVE)
 #define CONFIG_NAME "fivem"
 #elif defined (GTA_NY)
-#define CONFIG_NAME "citizeniv"
+#define CONFIG_NAME "libertym"
 #endif
 
 struct ConsoleWriter : public console::IWriter

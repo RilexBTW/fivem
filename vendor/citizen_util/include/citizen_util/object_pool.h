@@ -38,8 +38,12 @@
 #include "detached_queue.h"
 #include "type_helpers.h"
 
+#ifdef _M_AMD64
 #include <xenium/ramalhete_queue.hpp>
 #include <xenium/reclamation/generic_epoch_based.hpp>
+#else
+#include "ramalhete_queue.h"
+#endif
 
 #ifdef __clang__
 #define _aligned_malloc(x, a) aligned_alloc(a, x)
@@ -102,8 +106,11 @@ struct object_pool
 
 	// A list of frees not tied to a bucket.
 	//
+#ifdef _M_AMD64
 	inline static xenium::ramalhete_queue<object_entry*, xenium::policy::reclaimer<xenium::reclamation::new_epoch_based<>>> detached_frees;
-
+#else
+	inline static FAAArrayQueue<object_entry> detached_frees;
+#endif
 	// Base pool type.
 	//
 	struct pool_instance
@@ -204,8 +211,10 @@ struct object_pool
 		void kill()
 		{
 			expired = true;
-			while (auto free_val = free_queue.pop(&object_entry::free_queue_key))
+			while (object_entry* free_val = free_queue.pop(&object_entry::free_queue_key))
+			{
 				detached_frees.push(free_val);
+			}
 		}
 
 		// Revive from pool.
@@ -222,8 +231,11 @@ struct object_pool
 	{
 		// Free buckets; this happens when a thread gets destroyed.
 		//
+#ifdef _M_AMD64
 		inline static xenium::ramalhete_queue<bucket_entry*, xenium::policy::reclaimer<xenium::reclamation::new_epoch_based<>>> free_buckets;
-
+#else
+		inline static FAAArrayQueue<bucket_entry> free_buckets;
+#endif
 		// Our bucket.
 		//
 		bucket_entry* bucket;
