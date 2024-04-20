@@ -15,17 +15,37 @@
 #include <CrossBuildRuntime.h>
 
 #include <Error.h>
-#include <dxgi1_4.h>
-#include <dxgi1_5.h>
-#include <dxgi1_6.h>
-#include <wrl.h>
-#pragma comment(lib, "dxgi.lib")
-namespace WRL = Microsoft::WRL;
 
 fwEvent<> OnGrcCreateDevice;
 fwEvent<> OnGrcBeginScene;
 fwEvent<> OnGrcEndScene;
 
+static HANDLE g_gameWindowEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+void DLL_EXPORT UiDone()
+{
+	static HostSharedData<CfxState> initState("CfxInitState");
+	WaitForSingleObject(g_gameWindowEvent, INFINITE);
+
+	auto uiExitEvent = CreateEventW(NULL, TRUE, FALSE, va(L"CitizenFX_PreUIExit%s", IsCL2() ? L"CL2" : L""));
+	auto uiDoneEvent = CreateEventW(NULL, FALSE, FALSE, va(L"CitizenFX_PreUIDone%s", IsCL2() ? L"CL2" : L""));
+
+	if (uiExitEvent)
+	{
+		SetEvent(uiExitEvent);
+	}
+
+	if (uiDoneEvent)
+	{
+		WaitForSingleObject(uiDoneEvent, INFINITE);
+	}
+}
+
+#include <dxgi1_4.h>
+#include <dxgi1_6.h>
+#include <wrl.h>
+#pragma comment(lib, "dxgi.lib")
+namespace WRL = Microsoft::WRL;
 static void RegisterPrimaryGPU()
 {
 	{
@@ -663,8 +683,8 @@ public:
 		if (SUCCEEDED(result))
 		{
 			RegisterPrimaryGPU();
-			OnGrcCreateDevice();
-			*ppReturnedDeviceInterface = new IDirect3D9DeviceProxy(*ppReturnedDeviceInterface);
+			SetEvent(g_gameWindowEvent);
+//			*ppReturnedDeviceInterface = new IDirect3D9DeviceProxy(*ppReturnedDeviceInterface);
 		}
 		return result;
 	}
@@ -691,7 +711,9 @@ static void __declspec(naked) InvokeEndSceneCBStub()
 
 static void __stdcall InvokeCreateCB(void* a1, HEAP_INFORMATION_CLASS a2, void* a3, SIZE_T a4)
 {
+	RegisterPrimaryGPU();
 	HeapSetInformation(a1, a2, a3, a4);
+	OnGrcCreateDevice();
 }
 
 void PreD3DReset()
@@ -764,7 +786,6 @@ debugStuff:
 
 static HookFunction hookFunction([]()
 {
-	/*
 	// D3D Device Begin Scene
 	static hook::inject_call<void, int> beginSceneCB((ptrdiff_t)hook::get_pattern("56 8B F1 E8 ? ? ? ? 80 7C 24 08 00", 3));
 	beginSceneCB.inject([] (int)
@@ -786,7 +807,6 @@ static HookFunction hookFunction([]()
 		origEndScene = hook::get_call(location);
 		hook::call(location, InvokeEndSceneCBStub);
 	}
-	*/
 
 	// Replace Direct3DCreate with our own stub device
 	g_origDirect3DCreate9 = hook::iat("d3d9.dll", IDirect3D9Proxy::HookCreateDirect3D9, "Direct3DCreate9");

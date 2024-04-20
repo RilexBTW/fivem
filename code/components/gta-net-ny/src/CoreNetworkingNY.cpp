@@ -76,10 +76,11 @@ int __stdcall CfxRecvFrom(SOCKET s, char* buf, int len, int flags, sockaddr* fro
 
 			*fromlen = sizeof(sockaddr_in);
 
-			//if (CoreIsDebuggerPresent())
+			/*if (CoreIsDebuggerPresent())
 			{
-				//trace("CfxRecvFrom (from %i %s) %i bytes on %p\n", netID, addr, length, (void*)s);
+				trace("CfxRecvFrom (from %i %s) %i bytes on %p\n", netID, addr, length, (void*)s);
 			}
+			*/
 
 			return fwMin((size_t)len, length);
 		}
@@ -197,8 +198,6 @@ struct OnlineAddress
 	uint16_t port2;
 };
 
-static int g_localAddress = getenv("COMPUTERNAME")[0] == 'F' ? 1 : 2;
-
 bool __cdecl GetLocalPeerAddressHook(rage::netPeerAddress* address)
 {
 	auto success = g_origGetLocalPeerAddress(address);
@@ -249,7 +248,6 @@ void SocketInitHook()
 
 	// yes, the relay is active
 	hook::put<uint8_t>(hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2), 1);
-	//**hook::get_pattern<char*>("80 3D ? ? ? ? 00 74 32 6A 00 68", 2) = 1;
 
 	static auto connectionMgrPtr = *hook::get_pattern<void*>("8B 01 6A 07 68", 5);
 

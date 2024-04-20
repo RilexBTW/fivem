@@ -30,19 +30,16 @@ static hook::cdecl_stub<void(const char*, fiDevice*, bool)> _fiDevice__MountGlob
 fiDevice* fiDevice::GetDevice(const char* path, bool allowRoot) 
 { 
 	return _fiDevice__GetDevice(path, allowRoot);
-	//EAXJMP(0x5ABC80); 
 }
 
 void fiDevice::Unmount(const char* rootPath)
 { 
 	return _fiDevice__Unmount(rootPath);
-	//EAXJMP(0x5AC080);
 }
 
 void fiDevice::MountGlobal(const char* path, fiDevice* device, bool allowRoot) 
 {
 	return _fiDevice__MountGlobal(path, device, allowRoot);
-	//EAXJMP(0x5ABE20);
 }
 
 rage::fiDevice::~fiDevice() {}

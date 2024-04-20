@@ -231,7 +231,7 @@ std::optional<int> EnsureGamePath()
 #elif defined(IS_RDR3)
 				if (checkFile(L"common_0.rpf") && checkFile(L"appdata0_update.rpf") && checkFile(L"levels_7.rpf") && checkFile(L"RDR2.exe") && checkFile(L"x64\\dlcpacks\\mp007\\dlc.rpf"))
 #elif defined(GTA_NY)
-				if (checkFile(L"pc/audio/sfx/general.rpf"))
+				if (checkFile(L"pc/audio/sfx/general.rpf") && checkFile(L"GTAIV.exe") && checkFile(L"TBoGT\\pc\\audio\\sfx\\EP2_SFX.rpf") && checkFile(L"TLAD\\pc\\audio\\sfx\\EP1_SFX.rpf"))
 #endif
 				{
 					WritePrivateProfileString(L"Game", pathKey, gameRoot.c_str(), fpath.c_str());
@@ -323,6 +323,7 @@ std::optional<int> EnsureGamePath()
 
 	if (GetFileAttributes(gamePath.c_str()) == INVALID_FILE_ATTRIBUTES)
 	{
+		// #TODOLIBERTY CE is the only supported version now.
 #if defined(GTA_NY)
 		std::wstring eflcPath = std::wstring(resultPath) + L"\\EFLC.exe";
 

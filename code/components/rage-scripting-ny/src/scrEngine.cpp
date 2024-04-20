@@ -17,15 +17,12 @@ static char* g_threadCollection;
 
 namespace rage
 {
+static std::unordered_map<uint32_t, scrEngine::NativeHandler> g_fastPathMap;
+
 pgPtrCollection<GtaThread>* scrEngine::GetThreadCollection()
 {
 	return *reinterpret_cast<pgPtrCollection<GtaThread>**>(g_threadCollection);
 }
-
-/*void scrEngine::SetInitHook(void(*hook)(void*))
-{
-	g_hooksDLL->SetHookCallback(StringHash("scrInit"), hook);
-}*/
 
 scrThread** scrActiveThread;
 
@@ -92,7 +89,6 @@ static hook::cdecl_stub<void(uint32_t, scrEngine::NativeHandler)> _registerNativ
 void RegisterNative(uint32_t hash, scrEngine::NativeHandler handler) 
 { 
 	_registerNative(hash, handler);
-	//EAXJMP(0x5A6200);
 }
 
 static std::vector<std::pair<uint32_t, scrEngine::NativeHandler>> g_nativeHandlers;
@@ -109,7 +105,7 @@ void scrEngine::RegisterNativeHandler(size_t nativeHash, NativeHandler handler)
 
 static HookFunction initFunction([] ()
 {
-	// up the native limit
+	// up the native limit, default is 3203 on b43.
 	hook::put<uint32_t>(hook::get_pattern("68 83 0C 00 00", 1), 9999);
 
 	g_threadCollection = hook::get_pattern<char>("74 16 8B 01 57 FF 50 0C", -11);
@@ -136,6 +132,27 @@ static hook::thiscall_stub<scrEngine::NativeHandler(void*, uint32_t)> _getNative
 
 scrEngine::NativeHandler scrEngine::GetNativeHandler(uint32_t hash)
 {
-	return _getNativeHandler(NULL, hash);
+	scrEngine::NativeHandler handler = nullptr;
+
+	auto it = g_fastPathMap.find(hash);
+
+	if (it != g_fastPathMap.end())
+	{
+		handler = it->second;
+	}
+
+	if (!handler)
+	{
+		handler = _getNativeHandler(NULL, hash);
+
+		if (handler)
+		{
+			#include "BlockedNatives.h"
+		}
+
+		g_fastPathMap.insert({ hash, handler });
+	}
+
+	return handler;
 }
 }

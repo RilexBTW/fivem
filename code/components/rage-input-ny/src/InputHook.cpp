@@ -148,16 +148,6 @@ LRESULT APIENTRY grcWindowProcedure(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 static void RepairInput()
 {
-	//char spillBuffer[256];
-
-	// function 1 regarding input
-	//((void(*)(char*, int))0x6366D0)(spillBuffer, 0);
-
-	// unset XLive overlay showing flag - unblocks input
-	/*if (*(uint8_t*)0x1970A21 & 1)
-	{
-		*(uint8_t*)0x1970A21 &= ~1;
-	}*/
 }
 
 int LockEnabled()
@@ -184,9 +174,10 @@ static int32_t* mouseAxisX;
 static int32_t* mouseAxisY;
 static bool* isMenuActive;
 
+//Smoother mouse controls, as the function often returns random numbers, leading to inconsistent mouse movement behaviour
 static double SetMouseAxisDelta(int input, int32_t axis)
 {
-	if (!input || !(axis == 0 || axis == 1) || (isMenuActive && *isMenuActive))
+	if (!input || (isMenuActive && *isMenuActive))
 	{
 		return 0.0;
 	}
@@ -200,7 +191,6 @@ static double SetMouseAxisDelta(int input, int32_t axis)
 		return (float)*mouseAxisY * 0.0078125;
 	}
 
-	//We are in a menu and don't want to move camera.
 	return 0.0;
 }
 
@@ -258,12 +248,6 @@ static HookFunction hookFunction([]()
 		auto location = hook::get_pattern<char>("50 FF 15 ? ? ? ? 5F 5E 5B C3");
 		hook::jump(location + 10, RepairInput); // tail of above function
 		hook::nop(location, 7); // ignore ShowCursor calls
-	}
-
-	//Fix mouse cursor scale
-	{
-	//	hook::put<float>(hook::get_pattern("F3 0F 11 44 24 ? FF 50 ? 66 0F 6E C0 0F 5B C0 6A"), 30.0f * 0.0009765625f);
-	//	hook::put<float>(hook::get_pattern("F3 0F 11 44 24 ? E8 ? ? ? ? D9 5C 24 ? 80 3D ? ? ? ? ? 74 ? F3 0F 10 05"), 30.0f * 0.000976562f);
 	}
 
 	{
