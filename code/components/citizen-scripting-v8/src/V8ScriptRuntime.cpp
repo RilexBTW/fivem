@@ -70,6 +70,8 @@ inline bool UseThis()
 static constexpr std::pair<const char*, ManifestVersion> g_scriptVersionPairs[] = {
 #if defined(IS_RDR3)
 	{ "rdr3_universal.js", guid_t{ 0 } }
+#elif defined(GTA_NY)
+	{ "ny_universal.js", guid_t{ 0 } }
 #else
 	{ "natives_universal.js", guid_t{ 0 } }
 #endif

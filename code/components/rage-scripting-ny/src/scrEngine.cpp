@@ -10,6 +10,8 @@
 #include "CrossLibraryInterfaces.h"
 #include <Hooking.h>
 
+extern void PointerArgumentSafety();
+
 fwEvent<> rage::scrEngine::OnScriptInit;
 fwEvent<bool&> rage::scrEngine::CheckNativeScriptAllowed;
 
@@ -115,13 +117,21 @@ static HookFunction initFunction([] ()
 
 	scrEngine::OnScriptInit.Connect([] ()
 	{
-		for (auto& handler : g_nativeHandlers)
+		auto doReg = []()
 		{
-			RegisterNative(handler.first, handler.second);
-		}
+			for (auto& handler : g_nativeHandlers)
+			{
+				RegisterNative(handler.first, handler.second);
+			}
 
-		// to prevent double registration resulting in a game error
-		g_nativeHandlers.clear();
+			// to prevent double registration resulting in a game error
+			g_nativeHandlers.clear();
+		};
+
+		//doReg();
+		//PointerArgumentSafety();
+		g_fastPathMap.clear();
+		doReg();
 	});
 });
 

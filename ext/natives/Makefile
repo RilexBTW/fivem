@@ -102,7 +102,7 @@ all: out/v2 \
 	out/v2/NativesFive.cs out/v2/NativesServer.cs out/v2/NativesRDR3.cs out/v2/NativesNY.cs \
 	out/rpc_natives.json \
 	out/natives_server.lua out/natives_server.d.ts out/natives_server.js out/natives_server.zip \
-	out/Natives.h out/NativesRDR.h out/NativesServer.h out/NativesNY.h out/PASGen.h \
+	out/Natives.h out/NativesRDR.h out/NativesServer.h out/NativesNY.h out/PASGen.h out/PASGen-ny.h \
 	$(GTA_OUTPUTS_LUA) $(GTA_OUTPUTS_JS) $(GTA_OUTPUTS_DTS) $(GTA_OUTPUTS_ZIP) \
 	$(RDR_OUTPUTS_LUA) $(RDR_OUTPUTS_JS) $(RDR_OUTPUTS_DTS) $(RDR_OUTPUTS_ZIP) \
 	$(NY_OUTPUTS_LUA) $(NY_OUTPUTS_JS) $(NY_OUTPUTS_DTS) $(NY_OUTPUTS_ZIP)
@@ -112,7 +112,7 @@ clean:
 	rm -r out
 
 out/v2:
-	mkdir -p out/v2
+	mkdir -p out
 
 out/NativesFive.cs: inp/natives_global.lua $(CODEGEN_SCRIPTS) codegen_out_cs.lua codegen_out_enum.lua
 	echo "$$NATIVES_FIVE_HEADER" > $@
@@ -164,6 +164,9 @@ out/NativesServer.h: inp/natives_global.lua $(CODEGEN_SCRIPTS) codegen_out_nativ
 
 out/PASGen.h: inp/natives_global.lua $(CODEGEN_SCRIPTS) codegen_out_pointer_args.lua
 	./lua53 codegen.lua inp/natives_global.lua pointer_args > $@
+
+out/PASGen-ny.h: inp/natives_ny.lua $(CODEGEN_SCRIPTS) codegen_out_pointer_args.lua
+	./lua53 codegen.lua inp/natives_ny.lua pointer_args > $@
 
 out/rpc_natives.json: $(CODEGEN_SCRIPTS) inp/natives_global.lua codegen_out_rpc.lua rpc_spec_natives.lua
 	./lua53 codegen.lua inp/natives_global.lua rpc server > $@

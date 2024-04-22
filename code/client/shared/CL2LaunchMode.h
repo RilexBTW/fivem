@@ -111,6 +111,8 @@ inline const std::string& GetProductKey()
 		return "Five";
 #elif defined(IS_RDR3)
 		return "RDR";
+#elif defined(GTA_NY)
+		return "NY";
 #else
 		return "CFX";
 #endif

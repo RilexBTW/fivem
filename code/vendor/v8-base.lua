@@ -5,11 +5,16 @@ local baseVersion = version:match('%d+%.%d+')
 
 return {
 	include = function()
+		if _OPTIONS["game"] ~= "ny" then
+			defines {
+				'V8_COMPRESS_POINTERS',
+				'V8_COMPRESS_POINTERS_IN_SHARED_CAGE',
+				'V8_31BIT_SMIS_ON_64BIT_ARCH'
+			}
+		end
+
 		defines {
-			'V8_COMPRESS_POINTERS',
-			'V8_31BIT_SMIS_ON_64BIT_ARCH',
-			'V8_COMPRESS_POINTERS_IN_SHARED_CAGE',
-			'CPPGC_CAGED_HEAP',
+			'CPPGC_CAGED_HEAP'
 		}
 
 		if os.istarget('windows') then

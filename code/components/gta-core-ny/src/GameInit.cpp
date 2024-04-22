@@ -51,18 +51,23 @@ void GameInit::LoadGameFirstLaunch(bool (*callBeforeLoad)())
 	OnGameRequestLoad();
 }
 
-#if we_do_want_loading_tune
+#ifdef we_do_want_loading_tune
 struct LoadingTune
 {
 	void StartLoadingTune();
 };
 
-void WRAPPER LoadingTune::StartLoadingTune()
+static hook::cdecl_stub<void (void*)> _startLoadingTune([]()
+{
+	return hook::get_pattern("83 EC ? B8 ? ? ? ? 57 8B F9 66 39 47 ? 74 ? 83 7F ? ? 56 8D 77 ? 75 ? 8D 4C 24 ? E8 ? ? ? ? FF 35 ? ? ? ? 8D 44 24 ? 50 E8 ? ? ? ? 83 C4 ? 8D 44 24 ? 6A ? 6A ? 6A ? 50 56 68 ? ? ? ? 8B CF C7 44 24 ? ? ? ? ? E8 ? ? ? ? 83 3E ? 74 ? 6A ? 6A ? 68 ? ? ? ? E8 ? ? ? ? 8B 0E 83 C4 ? 50 E8 ? ? ? ? FF 35 ? ? ? ? 8B 0D ? ? ? ? E8 ? ? ? ? 5E 5F 83 C4 ? C3 CC CC CC CC 83 EC ? 56");
+});
+
+void LoadingTune::StartLoadingTune()
 { 
-	EAXJMP(0x7B9980);
+	_startLoadingTune(this);
 }
 
-static LoadingTune& loadingTune = *(LoadingTune*)0x10F85B0;
+static LoadingTune* loadingTune;
 #endif
 
 GameInit::GameInit()
@@ -93,8 +98,8 @@ void GameInit::SetLoadScreens()
 
 	hook::put<uint8_t>(loadScreensEnabled, 1);
 
-#if we_do_want_loading_tune
-	loadingTune.StartLoadingTune();
+#ifdef we_do_want_loading_tune
+	loadingTune->StartLoadingTune();
 #endif
 }
 
@@ -148,9 +153,6 @@ void GameInit::KillNetwork(const wchar_t* reason)
 		return;
 	}
 
-	// #TODOLIBERTY: ?
-	//g_hooksDLL->SetDisconnectSafeguard(false);
-
 	// special case for graceful kill
 	if (reason == (wchar_t*)1)
 	{
@@ -184,7 +186,7 @@ bool* reloadGameNextFrame;
 
 void GameInit::ReloadGame()
 {
-	//((void(*)())0x40ACE0)();
+	//((void(*)())	)();
 	//((void(*)())0x40B180)();
 
 	*reloadGameNextFrame = true;
@@ -264,12 +266,6 @@ static InitFunction initFunction([]()
 		{
 			GameFlags::ResetFlags();
 
-			/*nui::SetMainUI(false);
-
-			nui::DestroyFrame("mpMenu");*/
-
-			//m_connectionState = CS_DOWNLOADING;
-
 			if (!g_gameInit->GetGameLoaded())
 			{
 				g_gameInit->SetLoadScreens();
@@ -311,12 +307,15 @@ static InitFunction initFunction([]()
 		*(volatile int*)0 = 0;
 	});
 });
- 
+
 static HookFunction hookFunction([]()
 {
 	reloadGameNextFrame = *(bool**)(hook::get_call(hook::get_pattern<char>("6a 00 6a 20 6a 01 50 6a 00", 50)) + 0x16);
 	stopNetwork = *hook::get_pattern<bool*>("83 f8 0e 74 34", -9);
 	dontProcessTheGame = *hook::get_pattern<bool*>("EB 26 6A 01 6A 00 6A 00 B9", 19);
+#ifdef we_do_want_loading_tune
+	loadingTune = *hook::get_pattern<LoadingTune*>("B9 ? ? ? ? E8 ? ? ? ? 8D 44 24 38", 1);
+#endif
 
 	// weird jump because of weird random floats? probably for fading anyway...
 	hook::nop(hook::pattern("F6 C4 44 0F 8A ? ? ? ? 80 3D ? ? ? ? 00").count(2).get(1).get<void*>(3), 6);
@@ -327,7 +326,7 @@ static HookFunction hookFunction([]()
 	// hook to reset processing the game after our load caller finishes
 	{
 		auto location = hook::get_pattern("6A 00 68 FF 00 00 00 68 E8 03 00 00 B9", 17);
-		hook::set_call(&origToggleBack, location);
+		hook::set_call(&origToggleBack, location);	
 		hook::call(location, ToggleBackGameProcessStub);
 	}
 
@@ -347,15 +346,20 @@ static HookFunction hookFunction([]()
 	// don't wait for loadscreens at the start
 	hook::put<uint8_t>(hook::get_pattern("80 3D ? ? ? ? 00 B9 01 00 00 00 0F 45 C1 80 3D", -23), 0xEB);
 
-	// always redo game object variables
-	//hook::nop(0x4205C5, 2);
-
 	// silly people doing silly things (related to loadGameNow call types)
 	{
 		auto location = hook::get_pattern<char>("6A 00 68 FF 00 00 00 68 E8 03 00 00 B9");
 		hook::nop(location - 0x45, 2);
 		hook::nop(location - 0x3B, 2);
 	}
+
+	//Force 
+	//*(int*)0x011100E0 = 1;
+	//*(int*)0x011100D8 = 1;
+
+	// Force steam to be initialized
+	//TODO: Patternise this
+	//hook::put(0x011100D8, 1);
 
 	hook::nop(hook::get_pattern("6A 00 6A 00 0F 84 ? ? ? ? 8B", 20), 6);
 	hook::nop(hook::get_pattern("6A 00 6A 00 68 C8 00 00 00 E8 ? ? ? ? 5E 5B", 24), 2);
