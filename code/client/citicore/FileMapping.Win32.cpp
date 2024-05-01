@@ -107,13 +107,6 @@ static std::wstring MapRedirectedFilename(const wchar_t* origFileName)
 		}
 	}
 
-#ifdef GTA_NY
-	if (wcsstr(origFileName, L"MTLX.dll") != nullptr)
-	{
-		return MakeRelativeCitPath("wedontusemtlxheresodontloaditpleasethankyou.dll");
-	}
-#endif
-
 	if (wcsstr(origFileName, L"autosignin.dat") != nullptr)
 	{
 		return MakeRelativeCitPath(L"data\\game-storage\\autosignin.dat");

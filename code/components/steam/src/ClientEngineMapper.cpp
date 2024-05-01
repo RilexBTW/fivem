@@ -15,7 +15,9 @@
 ClientEngineMapper::ClientEngineMapper(void* clientEngine, HSteamPipe steamPipe, HSteamUser steamUser)
 	: InterfaceMapperBase(clientEngine), m_pipe(steamPipe), m_user(steamUser)
 {
+#ifndef GTA_NY
 	LookupMethods();
+#endif
 }
 
 typedef void* (__thiscall *ClientMethodType) (void*, HSteamPipe, const char*);

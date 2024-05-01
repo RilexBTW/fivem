@@ -39,7 +39,8 @@ void ScriptInitHook(bool dontStartScripts)
 bool ComponentInstance::DoGameLoad(void* module)
 {
 	MH_Initialize();
-	MH_CreateHook(hook::get_pattern("C6 05 ? ? ? ? 00 C7 05 ? ? ? ? FF FF FF FF C6 05 ? ? ? ? 00 C7 05 ? ? ? ? 00 00 00 00", -0x5f), ScriptInitHook, (void**)&g_origScriptInit);
+	MH_CreateHook(hook::get_pattern("55 8B EC 83 E4 ? 83 EC ? 56 57 6A ? 68 ? ? ? ? E8 ? ? ? ? 8B 0D"), ScriptInitHook, (void**)&g_origScriptInit);
+	//MH_CreateHook(hook::get_pattern("C6 05 ? ? ? ? 00 C7 05 ? ? ? ? FF FF FF FF C6 05 ? ? ? ? 00 C7 05 ? ? ? ? 00 00 00 00", -0x5f), ScriptInitHook, (void**)&g_origScriptInit);
 	MH_EnableHook(MH_ALL_HOOKS);
 
 	HookFunction::RunAll();

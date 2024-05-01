@@ -353,13 +353,8 @@ static HookFunction hookFunction([]()
 		hook::nop(location - 0x3B, 2);
 	}
 
-	//Force 
-	//*(int*)0x011100E0 = 1;
-	//*(int*)0x011100D8 = 1;
-
 	// Force steam to be initialized
-	//TODO: Patternise this
-	//hook::put(0x011100D8, 1);
+	hook::put<uint8_t>(hook::get_pattern("75 ? E8 ? ? ? ? B0 ? 5F 5E 5B"), 0XEB);
 
 	hook::nop(hook::get_pattern("6A 00 6A 00 0F 84 ? ? ? ? 8B", 20), 6);
 	hook::nop(hook::get_pattern("6A 00 6A 00 68 C8 00 00 00 E8 ? ? ? ? 5E 5B", 24), 2);

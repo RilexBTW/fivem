@@ -37,12 +37,12 @@ misrepresented as being the original software.
 
 static hook::thiscall_stub<rage::eThreadState(GtaThread*, uint32_t)> _gtaThread__Tick([]()
 {
-	return hook::get_pattern("56 6A 18 8B F1 E8 ? ? ? ? 50 8D");
+	return hook::get_pattern("56 6A ? 8B F1 E8 ? ? ? ? 50");
 });
 
 static hook::thiscall_stub<void(GtaThread*)> _gtaThread__Kill([]()
 {
-	return hook::get_pattern("57 8B F9 8B 0D ? ? ? ? 57 8B 01");
+	return hook::get_pattern("57 8B F9 8B 0D ? ? ? ? 57");
 });
 
 rage::eThreadState GtaThread::Tick(uint32_t opsToExecute) 
