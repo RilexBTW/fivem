@@ -36,30 +36,6 @@
 
 constexpr static const long BUFFER_QUEUE_SIZE = 1024;
 
-template <typename T>
-struct QueueNode
-{
-    std::atomic<int> deqidx;
-    std::atomic<T*> items[BUFFER_QUEUE_SIZE];
-    std::atomic<int> enqidx;
-    std::atomic<QueueNode*> next;
-
-    // Start with the first entry pre-filled and enqidx at 1
-    QueueNode(T* item) : deqidx{ 0 }, enqidx{ 1 }, next{ nullptr }
-    {
-        items[0].store(item, std::memory_order_relaxed);
-        for (long i = 1; i < BUFFER_QUEUE_SIZE; i++)
-        {
-            items[i].store(nullptr, std::memory_order_relaxed);
-        }
-    }
-
-    bool casNext(QueueNode* cmp, QueueNode* val)
-    {
-        return next.compare_exchange_strong(cmp, val);
-    }
-};
-
 /**
  * <h1> Fetch-And-Add Array Queue </h1>
  *
@@ -72,7 +48,7 @@ struct QueueNode
  * our algorithm is lock-free.
  * In FAAArrayQueue eventually a new node will be inserted (using Michael-Scott's
  * algorithm) and it will have an item pre-filled in the first position, which means
- * that at most, after BUFFER_SIZE steps, one item will be enqueued (and it can then
+ * that at most, after BUFFER_QUEUE_SIZE steps, one item will be enqueued (and it can then
  * be dequeued). This kind of progress is lock-free.
  *
  * Each entry in the array may contain one of three possible values:
@@ -106,9 +82,35 @@ struct QueueNode
 template<typename T>
 class FAAArrayQueue 
 {
-    static constexpr long BUFFER_SIZE = 1024;  // 1024
 private:
+    template <typename T>
+    struct QueueNode
+    {
+        std::atomic<int> deqidx;
+        std::atomic<T*> items[BUFFER_QUEUE_SIZE];
+        std::atomic<int> enqidx;
+        std::atomic<QueueNode*> next;
+
+        // Start with the first entry pre-filled and enqidx at 1
+        QueueNode(T* item) : deqidx{ 0 }, enqidx{ 1 }, next{ nullptr }
+        {
+            items[0].store(item, std::memory_order_relaxed);
+            for (unsigned i = 1; i < BUFFER_QUEUE_SIZE; i++)
+            {
+                items[i].store(nullptr, std::memory_order_relaxed);
+            }
+        }
+
+        bool casNext(QueueNode* cmp, QueueNode* val)
+        {
+            return next.compare_exchange_strong(cmp, val);
+        }
+    };
+private:
+    using value_type = T*;
     using Node = QueueNode<T>;
+
+    constexpr static const uintptr_t TAKEN_PTR = ~(uintptr_t)(0);
 
     bool casTail(Node *cmp, Node *val) 
     {
@@ -120,17 +122,19 @@ private:
         return head.compare_exchange_strong(cmp, val);
     }
 
-    //Used with HazardPointers.h
-    static T* takenPtr()
+    static value_type takenPtr()
     {
-        return (T*)~(uintptr_t)(0);
+        return (value_type)TAKEN_PTR;
     }
 
     HazardPointersManager<Node> m_hazardManagers;
 
+    static constexpr unsigned step_size = 11;
+    static constexpr unsigned max_idx = step_size * 512;
+
     // Pointers to head and tail of the list
-    alignas(128) std::atomic<Node*> head;
-    alignas(128) std::atomic<Node*> tail;
+    alignas(64) std::atomic<Node*> head;
+    alignas(64) std::atomic<Node*> tail;
 public:
     using HazardToken = HazardPointer<Node>;
 
@@ -153,38 +157,36 @@ public:
         return { m_hazardManagers };
     }
 private:
-    void enqueueInternal(T* item, HazardToken& hazard)
+    void enqueueInternal(value_type item, HazardToken& hazard)
     {
         if (item == nullptr)
         {
             return;
         }
 
-        while (true) 
+        for (;;)
         {
-            Node* ltail = hazard.record->setHazardPtr(tail);
-            const int idx = ltail->enqidx.fetch_add(1);
-            if (idx > BUFFER_QUEUE_SIZE-1)
+            Node* lTail = hazard.record->setHazardPtr(tail);
+            const int idx = lTail->enqidx.fetch_add(step_size, std::memory_order_relaxed);
+            if (idx >= BUFFER_QUEUE_SIZE)
             { // This node is full
-                if (ltail != tail.load())
+                if (lTail != tail.load(std::memory_order_acquire))
                 {
                     continue;
                 }
 
-                Node* lnext = ltail->next.load();
-                if (lnext == nullptr) 
+                Node* lNext = lTail->next.load(std::memory_order_relaxed);
+                if (lNext == nullptr) 
                 {
                     Node* newNode = m_hazardManagers.dequeueDelete();
-
-                    if (newNode == nullptr)
+                    if (!newNode)
                     {
                         newNode = (Node*)malloc(sizeof(Node));
                     }
-
                     newNode = new (newNode) Node(item);
-                    if (ltail->casNext(nullptr, newNode)) 
+                    if (lTail->casNext(nullptr, newNode))
                     {
-                        casTail(ltail, newNode);
+                        casTail(lTail, newNode);
                         hazard.record->reset();
                         return;
                     }
@@ -192,12 +194,12 @@ private:
                 } 
                 else 
                 {
-                    casTail(ltail, lnext);
+                    casTail(lTail, lNext);
                 }
                 continue;
             }
-            T* itemNull = nullptr;
-            if (ltail->items[idx].compare_exchange_strong(itemNull, item))
+            value_type itemNull = nullptr;
+            if (lTail->items[idx].compare_exchange_strong(itemNull, item))
             {
                 hazard.record->reset();
                 return;
@@ -205,33 +207,41 @@ private:
         }
     }
 
-    T* dequeueInternal(HazardToken& hazard)
+    value_type dequeueInternal(HazardToken& hazard)
     {
-        while (true)
+        for (;;)
         {
-            Node* lhead = hazard.record->setHazardPtr(tail);
-            if (lhead->deqidx.load() >= lhead->enqidx.load() && lhead->next.load() == nullptr)
+            Node* lHead = hazard.record->setHazardPtr(head);
+
+            const int popIdx = lHead->deqidx.load(std::memory_order_acquire);
+            const auto pushIdx = lHead->enqidx.load(std::memory_order_relaxed);
+
+            if (popIdx >= pushIdx && lHead->next.load(std::memory_order_relaxed) == nullptr)
             {
                 break;
             }
 
-            const int idx = lhead->deqidx.fetch_add(1);
-            if (idx > BUFFER_QUEUE_SIZE - 1)
-            { // This node has been drained, check if there is another one
-                Node* lnext = lhead->next.load();
+            unsigned idx = lHead->deqidx.fetch_add(step_size, std::memory_order_release);
+            // This node has been drained, check if there is another one
+            if (idx > BUFFER_QUEUE_SIZE)
+            {
+                Node* lnext = lHead->next.load(std::memory_order_acquire);
                 if (lnext == nullptr)
                 {
-                    break;  // No more nodes in the queue
+                    //No more nodes in the queue
+                    break; 
                 }
-                if (casHead(lhead, lnext))
+
+                //if ( casHead(lHead, lnext))
+                if (head.compare_exchange_strong(lHead, lnext, std::memory_order_release, std::memory_order_relaxed))
                 {
                     hazard.record->reset();
-                    m_hazardManagers.enqueueDelete(lhead);
+                    m_hazardManagers.enqueueDelete(lHead);
                 }
                 continue;
             }
 
-            T* item = lhead->items[idx].exchange(takenPtr());
+            value_type item = lHead->items[idx].exchange(takenPtr(), std::memory_order_relaxed);
             if (item == nullptr)
             {
                 continue;
@@ -243,22 +253,26 @@ private:
         return nullptr;
     }
 public:
-    T* pop()
+    value_type pop()
     {
         HazardToken token{ m_hazardManagers };
         return dequeueInternal(token);
     }
 
-    void push(T* item)
+    void push(value_type item)
     {
         HazardToken token{ m_hazardManagers };
         enqueueInternal(item, token);
     }
 
-    bool try_pop(T* item)
+    [[nodiscard]] bool try_pop(value_type& item)
     {   
         HazardToken token{ m_hazardManagers };
         item = dequeueInternal(token);
-        return item != nullptr;
+        if (item == nullptr)
+        {
+            return false;
+        }
+        return true;
     }
 };

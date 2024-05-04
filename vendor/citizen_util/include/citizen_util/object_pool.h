@@ -159,7 +159,7 @@ struct object_pool
 			}
 
 			// If we can find a detached free, use it.
-			object_entry* detached;
+			object_entry* detached{};
 			if (detached_frees.try_pop(detached))
 			{
 				return detached->decay();
@@ -247,10 +247,14 @@ struct object_pool
 
 		bucket_proxy()
 		{
-			if (!free_buckets.try_pop(bucket))
-				bucket = new bucket_entry();
-			else
+			if (free_buckets.try_pop(bucket))
+			{
 				bucket->revive();
+			}
+			else
+			{
+				bucket = new bucket_entry();
+			}
 		}
 
 		~bucket_proxy()
