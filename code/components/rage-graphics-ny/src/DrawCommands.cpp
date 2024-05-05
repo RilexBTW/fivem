@@ -34,6 +34,11 @@ CBaseDC::~CBaseDC()
 	//PURECALL();
 }
 
+static hook::thiscall_stub<void(CDrawSpriteDC*, float*, float*, float*, float*, void*, rage::grcTexture*)> _CDrawSpriteDC__ctor([]()
+{
+	return hook::get_call(hook::get_pattern("8B D1 8B 4C 24 ? 8B 42 ? C7 02 ? ? ? ? 33 05 ? ? ? ? 25 ? ? ? ? 31 42 ? FF 05 ? ? ? ? C7 02 ? ? ? ? C7 42 ? ? ? ? ? 8B 01 89 42 ? 8B 41 ? 8B 4C 24 ? 89 42 ? 8B 01 89 42 ? 8B 41 ? 8B 4C 24 ? 89 42 ? 8B 01 89 42 ? 8B 41 ? 8B 4C 24 ? 89 42 ? 8B 01 89 42 ? 8B 41 ? 89 42"));
+});
+
 static hook::thiscall_stub<void(CGenericDC*, void(*)())> _CGenericDC__ctor([]()
 {
 	return hook::get_call(hook::get_pattern("6A 00 84 FF 74 6E", 27));
@@ -107,7 +112,7 @@ void CBaseDC::Enqueue()
 
 static hook::cdecl_stub<void(rage::grcTexture*)> _setTexture([]()
 {
-	return hook::get_pattern("8B 44 24 04 85 C0 0F 44");
+	return (void*)hook::get_call(hook::get_pattern("E8 ? ? ? ? 8B 44 24 ? 83 C4 ? F3 0F 10 40 ? FF 74 24"));
 });
 
 void SetTexture(rage::grcTexture* texture) 
@@ -270,7 +275,7 @@ void GetGameResolution(int& resX, int& resY)
 
 static hook::cdecl_stub<void(int, int)> _setRenderState([]()
 {
-	return hook::get_call(hook::get_pattern("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4));
+	return hook::get_call(hook::get_pattern("E8 ? ? ? ? 83 C4 ? C3 CC 8B 44 24 ? FF 74 24"));
 });
 
 void SetRenderState(int rs, int val)
@@ -304,5 +309,7 @@ void SetScissorRect(int a, int b, int c, int d)
 
 IDirect3DDevice9* GetD3D9Device()
 {
-	return **(IDirect3DDevice9***)(hook::get_call(hook::get_pattern<char>("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4)) + 0x1D);
+	IDirect3DDevice9** device = *(IDirect3DDevice9***)(hook::get_call(hook::get_pattern<char>("6A 02 6A 04 E8 ? ? ? ? 6A 01", 4)) + 0x1D);
+
+	return *device;
 }

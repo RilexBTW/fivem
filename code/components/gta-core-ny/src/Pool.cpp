@@ -62,7 +62,7 @@ CPool** CPools::ms_pVehiclePool;
 
 static hook::thiscall_stub<void*(CPool*)> _allocate([]()
 {
-	return hook::get_pattern("53 8B D1 56 8B 42 10");
+	return hook::get_call(hook::get_pattern("E8 ? ? ? ? 85 C0 74 ? FF B4 24 ? ? ? ? 8B C8"));
 });
 
 void* CPool::Allocate() 

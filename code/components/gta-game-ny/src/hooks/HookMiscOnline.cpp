@@ -8,7 +8,7 @@ static HookFunction hookFunction([] ()
 	hook::return_function(hook::get_pattern("83 3D ? ? ? ? FF 74 ? 6A FF"));
 
 	// function which maintains counters related to MP_WARNING_5/MP_WARNING_6 messages; which are 'too slowly' and 'run out of streaming memory' disconnects
-	hook::return_function(hook::get_pattern("8B EA 56 8A F1 57", -0x08));
+	//hook::return_function(hook::get_pattern("8B EA 56 8A F1 57", -0x08));
 
 	// ignore initial loading screens
 	//hook::put<uint8_t>(hook::get_pattern("74 ? 80 3D ? ? ? ? ? 74 ? E8 ? ? ? ? 0F B6 05"), 0XEB);

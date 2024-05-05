@@ -5,7 +5,7 @@ int* localPlayer;
 
 static hook::cdecl_stub<CPlayerInfo*(int)> _getPlayer([]()
 {
-	return hook::get_pattern("8b 44 24 04 83 f8 1f 77 08");
+	return hook::get_pattern("8B 44 24 04 83 F8 1F 77 08");
 });
 
 CPlayerInfo* CPlayerInfo::GetPlayer(int index)
