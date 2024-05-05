@@ -63,7 +63,7 @@ namespace streaming
 	void DLL_EXPORT RemoveDataFileFromLoadList(const std::string& type, const std::string& path)
 	{
 		auto dataFilePair = std::make_pair(type, path);
-		std::remove(g_dataFiles.begin(), g_dataFiles.end(), dataFilePair);
+		g_dataFiles.erase(std::remove(g_dataFiles.begin(), g_dataFiles.end(), dataFilePair), g_dataFiles.end());
 	}
 
 	void DLL_EXPORT SetNextLevelPath(const std::string& path)
@@ -260,11 +260,6 @@ static bool __stdcall _openStreamHandleHook(Req* req)
 	return (handle != -1);
 }
 
-static hook::cdecl_stub<void* (const char*, int)> _loadContentFile([]()
-{
-	return hook::get_pattern("81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68");
-});
-
 static hook::cdecl_stub<void* (const char*, bool)> _loadAudioMetadata([]()
 {
 	return hook::get_pattern("51 A1 ? ? ? ? 85 C0 74");
@@ -278,29 +273,63 @@ static hook::cdecl_stub<void* (const char*, char, int)> _addImgFile([]()
 static void(__thiscall* dataFileMgr_addDlcLine)(void*, const char* line);
 static void** g_dataFileMgr;
 
+template<typename T>
+static auto SafeCall(const T& fn, const char* whatPtr = nullptr)
+{
+#ifndef _DEBUG
+	__try
+	{
+#endif
+		return fn();
+#ifndef _DEBUG
+	}
+	__except (SehRoutine(whatPtr, GetExceptionInformation()))
+	{
+		return std::result_of_t<T()>();
+	}
+#endif
+}
+
+static void HandleDataFile(const std::pair<std::string, std::string>& dataFile, const char* op)
+{
+	std::string typeName;
+	std::string fileName;
+
+	std::tie(typeName, fileName) = dataFile;
+
+	trace("%s %s %s.\n", op, typeName, fileName);
+
+	//TODO: Check against data_type's at 33 C0 C7 01 ? ? ? ? 89 41 ? 56, to make sure type is valid.
+	bool result = SafeCall([&]()
+	{
+		// Used for adding custom .IMG files.
+		if (typeName == "IMG")
+		{
+			_addImgFile(fileName.c_str(), 1, -1);
+			return true;
+		}
+		// audio metadata is usually handled in the episodes setup2.xml file.
+		else if (typeName == "AUDIO_METADATA")
+		{
+			_loadAudioMetadata(fileName.c_str(), false);
+		}
+
+		dataFileMgr_addDlcLine(*g_dataFileMgr, va("%s %s", typeName, fileName));
+		return true;
+	}, va("%s of %s in data file %s", op, fileName, typeName));
+	trace("done %s %s in data file %s\n", op, fileName, typeName);
+}
+
 static void LoadDataFiles()
 {
 	trace("Loading mounted data files (total: %d)\n", g_dataFiles.size());
 
-	for (auto& [type, value] : g_dataFiles)
+	for (auto it = g_dataFiles.begin(); it != g_dataFiles.end();)
 	{
-		auto hash = HashString(type);
+		auto [fileType, fileName] = *it;
 
-		switch (hash)
-		{
-		case HashString("CONTENTDATA"):
-			_loadContentFile(value.c_str(), 0);
-			break;
-		case HashString("AUDIOMETADATA"):
-			_loadAudioMetadata(value.c_str(), false);
-			break;
-		case HashString("IMG"):
-			_addImgFile(value.c_str(), 1, -1);
-			break;
-		default:
-			dataFileMgr_addDlcLine(*g_dataFileMgr, va("%s %s", type, value));
-			break;
-		}
+		HandleDataFile(*it, "loading");
+		it++;
 	}
 
 	g_dataFiles.clear();
@@ -327,13 +356,17 @@ static void StreamingInfoInit()
 	}
 }
 
-
+// 33 C0 C7 01 ? ? ? ? 89 41 ? 56 - function contains all file entries (e.g. IPL, POPCYCLE, etc)
 //Attach content.dat file
-// 81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68
+//81 EC ? ? ? ? A1 ? ? ? ? 33 C4 89 84 24 ? ? ? ? 8B 84 24 ? ? ? ? 53 56 68
 //Add IMG File
 // 83 EC ? A1 ? ? ? ? 53 56 C6 44 24
 //Attach audio file 
 // 51 A1 ? ? ? ? 85 C0 74
+// Get Free spot in txdStore Pool? used with _loadWTDFile
+// 8B 15 ? ? ? ? 53 56 8B 72 ? 33 C0 57 85 F6 7E ? 8B 7A ? 8B 5C 24 ? 8D A4 24 ? ? ? ? F6 04 07 ? 75 ? 8B 4A ? 0F AF C8 03 0A 74 ? 39 59 ? 74 ? 40 3B C6 7C ? 83 C8 ? 5F 5E 5B C3 CC CC CC CC CC CC CC CC CC CC CC CC CC CC CC 8B 44 24
+//Load #TD file
+// 8B 0D ? ? ? ? 56 8B 41 ? 57 8B 7C 24 ? F6 04 07 ? 74 ? 33 F6 EB ? 8B 71 ? 0F AF F7 03 31 E8 
 static HookFunction hookFunction([]()
 {
 	MH_Initialize();
@@ -343,7 +376,7 @@ static HookFunction hookFunction([]()
 	// don't do img bd/hdd (or layer) check
 	{
 		auto location = hook::get_pattern<char>("75 0C 66 8B 43 0E");
-			hook::nop(location, 2);
+		hook::nop(location, 2);
 		hook::put<uint8_t>(location + 12, 0xEB);
 	}
 

@@ -219,8 +219,18 @@ static InitFunction initFunction([] ()
 
 					for (auto& entry : list)
 					{
+#ifndef GTA_NY
 						auto path = resourceRoot + entry;
-
+#else
+						//TODO: Temporary workaround for stream files used in data_file(s) passed into dataFileMgr_addDlcLine.
+						//Game doesn't ack upon or crashes on stream files that when attempting to load through resources:/ mount.
+						//For now, we find these files and format the path under cache:/resourcename/file
+						auto path = resourceRoot + entry;
+						if (auto pos = entry.find("stream/", 0); pos != std::string::npos)
+						{
+							path = fmt::sprintf("cache:/%s/%s", resource->GetName(), entry.substr(7, entry.size() - 7));
+						}
+#endif
 						streaming::AddDataFileToLoadList(type, path);
 						entryListComponent->list.push_front({ type, path });
 					}
