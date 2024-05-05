@@ -14,11 +14,12 @@
 #include <ReverseGameData.h>
 #include <CrossBuildRuntime.h>
 
+#if __has_include(<scrEngine.h>)
 #include <scrEngine.h>
+#define LOG_DEPTH_PATCHES
+#endif
 
 #include <Error.h>
-
-#define LOG_DEPTH_PATCHES
 
 fwEvent<> OnGrcCreateDevice;
 fwEvent<> OnGrcBeginScene;
@@ -229,6 +230,7 @@ static HookFunction hookFunction([]()
 	}
 
 	// Handle pre, post and D3D Reset failures
+	// TODO: update pattern
 	//hook::jump(hook::get_pattern("83 C0 10 3D 00 10 00 00", 22), PreAndPostD3DReset);
 
 	//Implements the needed changes and custom registers for the LogDepth patches to eliminate z-fighting/clipping

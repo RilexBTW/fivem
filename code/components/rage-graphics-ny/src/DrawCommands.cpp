@@ -34,10 +34,12 @@ CBaseDC::~CBaseDC()
 	//PURECALL();
 }
 
+#if 0
 static hook::thiscall_stub<void(CDrawSpriteDC*, float*, float*, float*, float*, void*, rage::grcTexture*)> _CDrawSpriteDC__ctor([]()
 {
 	return hook::get_call(hook::get_pattern("8B D1 8B 4C 24 ? 8B 42 ? C7 02 ? ? ? ? 33 05 ? ? ? ? 25 ? ? ? ? 31 42 ? FF 05 ? ? ? ? C7 02 ? ? ? ? C7 42 ? ? ? ? ? 8B 01 89 42 ? 8B 41 ? 8B 4C 24 ? 89 42 ? 8B 01 89 42 ? 8B 41 ? 8B 4C 24 ? 89 42 ? 8B 01 89 42 ? 8B 41 ? 8B 4C 24 ? 89 42 ? 8B 01 89 42 ? 8B 41 ? 89 42"));
 });
+#endif
 
 static hook::thiscall_stub<void(CGenericDC*, void(*)())> _CGenericDC__ctor([]()
 {

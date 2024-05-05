@@ -157,7 +157,9 @@ scrEngine::NativeHandler scrEngine::GetNativeHandler(uint32_t hash)
 
 		if (handler)
 		{
+#if __has_include(<BlockedNatives.h>)
 			#include "BlockedNatives.h"
+#endif
 		}
 
 		g_fastPathMap.insert({ hash, handler });
