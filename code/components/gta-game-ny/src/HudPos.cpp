@@ -8,7 +8,7 @@ HudPosition* HudPositions::GetPosition(int index)
 	return &ms_hudPositions[index];
 }
 
-static bool g_listInitialized;
+static bool g_listInitialized = false;
 static std::unordered_map<std::string, int> g_indexList;
 
 HudPosition* HudPositions::GetPosition(const char* name)

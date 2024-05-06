@@ -14,7 +14,7 @@
 
 #include <CustomText.h>
 
-CText* TheText;
+CText* TheText = nullptr;
 
 static const wchar_t* (__fastcall* g_origGetText)(void*, void*, const char*);
 

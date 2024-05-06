@@ -16,23 +16,6 @@ static HMONITOR GetPrimaryMonitorHandle()
 	return MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
 }
 
-static bool WINAPI MoveWindowCustom(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint)
-{
-	RECT rect = { X, Y, nWidth, nHeight };
-	MONITORINFO info;
-	HMONITOR monitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
-	info.cbSize = sizeof(MONITORINFO);
-	GetMonitorInfo(monitor, &info);
-	float DesktopResW = info.rcMonitor.right - info.rcMonitor.left;
-	float DesktopResH = info.rcMonitor.bottom - info.rcMonitor.top;
-	if ((rect.right - rect.left >= DesktopResW) || (rect.bottom - rect.top >= DesktopResH))
-	{
-		rect = g_curRect;
-	}
-	rect.left = (LONG)((DesktopResW / 2.0f) - (rect.right / 2.0f));
-	rect.top = (LONG)((DesktopResH / 2.0f) - (rect.bottom / 2.0f));
-	return MoveWindow(hWnd, rect.left, rect.top, rect.right, rect.bottom, bRepaint);
-}
 
 static void HandleWindowStyle()
 {
@@ -52,7 +35,7 @@ static void HandleWindowStyle()
 		}
 		AdjustWindowRect(&rect, lStyle, FALSE);
 		SetWindowLong(g_window, GWL_STYLE, lStyle);
-		MoveWindowCustom(g_window, 0, 0, rect.right - rect.left, rect.bottom - rect.top, TRUE);
+		MoveWindow(g_window, 0, 0, rect.right - rect.left, rect.bottom - rect.top, TRUE);
 	}
 }
 
@@ -79,8 +62,8 @@ static HWND WINAPI HookCreateWindowExA(_In_ DWORD dwExStyle, _In_opt_ LPCSTR lpC
 
 			X = 0;
 			Y = 0;
-			nWidth = info.rcMonitor.right;
-			nHeight = info.rcMonitor.bottom;
+			nWidth = X;//info.rcMonitor.right;
+			nHeight = Y;//info.rcMonitor.bottom;
 
 			dwExStyle = 0;
 		}
@@ -130,20 +113,15 @@ static bool WINAPI AdjustWindowRectCustom(LPRECT lpRect, DWORD dwStyle, BOOL bMe
 static HookFunction windowInit([]()
 {
 	g_origCreateWindowExA = hook::iat("user32.dll", HookCreateWindowExA, "CreateWindowExA");
-	hook::iat("user32.dll", MoveWindowCustom, "MoveWindow");
 	hook::iat("user32.dll", AdjustWindowRectCustom, "AdjustWindowRect");
 	hook::iat("user32.dll", SetRectCustom, "SetRect");
 
-	// 1.2.0.30: "8A 44 24 0C 88 41 10", 8
 	g_curOption = *hook::get_pattern<CommandLineOption**>("8B 44 24 10 89 41 04 A1", 8);
 	g_noborder = new CommandLineOption("border", "[GRAPHICS] Force disable borderless mode (needs -windowed)");
-
+	
 	//Force disable -managed command line option (Causes crashes related to D3D9)
 	hook::return_function(hook::get_pattern("A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC CC CC CC CC CC CC CC CC CC CC A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC CC CC CC CC CC CC CC CC CC CC A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3 CC CC CC CC CC CC CC CC CC CC CC E9"));
 
-	// default to non-fullscreen mode
-	//hook::put<uint8_t>(0x796BEB, 1);
-
 	// don't unset width, height, fullscreen, refreshrate values during initialization
-	hook::nop(hook::get_pattern("0F 45 C8 89 4C 24 40 68", 17), 10 * 5);
+	//hook::nop(hook::get_pattern("0F 45 C8 89 4C 24 40 68", 17), 10 * 5);
 });

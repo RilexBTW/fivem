@@ -131,7 +131,6 @@ public:
 	static CPool** ms_pPedPool;
 	
 	static CPool** ms_pVehiclePool;
-
 public:
 	static inline CPool* GetBuildingPool() { return *ms_pBuildingPool; }
 

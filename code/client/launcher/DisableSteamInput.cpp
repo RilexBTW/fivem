@@ -69,6 +69,8 @@ void SteamInput_Initialize()
 			271590
 #elif defined(IS_RDR3)
 			1174180
+#elif defined(GTA_NY)
+			12210
 #else
 			0
 #endif

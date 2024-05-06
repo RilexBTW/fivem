@@ -323,20 +323,7 @@ std::optional<int> EnsureGamePath()
 
 	if (GetFileAttributes(gamePath.c_str()) == INVALID_FILE_ATTRIBUTES)
 	{
-		// #TODOLIBERTY CE is the only supported version now.
-#if defined(GTA_NY)
-		std::wstring eflcPath = std::wstring(resultPath) + L"\\EFLC.exe";
-
-		if (GetFileAttributes(eflcPath.c_str()) != INVALID_FILE_ATTRIBUTES)
-		{
-			MessageBox(nullptr, L"The selected path does not contain a GTAIV.exe file. As this is an EFLC installation, placing a GTAIV.exe (version 1.0.7.0) from any source will work as well.", PRODUCT_NAME, MB_OK | MB_ICONWARNING);
-		}
-		else
-#endif
-		{
-			MessageBox(nullptr, va(gettext(L"The selected path does not contain a %s file."), GAME_EXECUTABLE), PRODUCT_NAME, MB_OK | MB_ICONWARNING);
-		}
-
+		MessageBox(nullptr, va(gettext(L"The selected path does not contain a %s file."), GAME_EXECUTABLE), PRODUCT_NAME, MB_OK | MB_ICONWARNING);
 		return 0;
 	}
 

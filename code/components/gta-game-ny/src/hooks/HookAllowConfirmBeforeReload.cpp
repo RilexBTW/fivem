@@ -3,6 +3,7 @@
 #include <Hooking.h>
 #include <GlobalEvents.h>
 
+/*
 static bool* drawingLoadMsg;
 
 static hook::cdecl_stub<bool(int, int, int, int, int, int, int)> _confirmMenuResult([]()
@@ -24,7 +25,6 @@ static HookFunction hookFunction([] ()
 		{
 			if (_confirmMenuResult(8, 1, 2, 1, 0, 0, 0))
 			{
-				//HookCallbacks::RunCallback(StringHash("msgConfirm"), nullptr);
 				OnMsgConfirm();
 
 				drawingLoadMsg = false;
@@ -36,12 +36,5 @@ static HookFunction hookFunction([] ()
 		}
 	});
 
-	static hook::inject_call<void, int> leaveGameCall(*(uintptr_t*)(hook::get_call(*hook::get_pattern<uintptr_t>("68 ? ? ? ? 68 24 6E D6 55", 1))));
-
-	leaveGameCall.inject([] (int)
-	{
-		OnMsgConfirm();
-
-		leaveGameCall.call();
-	});
 });
+*/
