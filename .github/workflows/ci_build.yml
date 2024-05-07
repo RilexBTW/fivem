@@ -10,6 +10,7 @@ jobs:
         builds:
           - [ FiveM,  five,   windows ]
           - [ RedM,   rdr3,   windows ]
+          - [ LibertyM, ny,   windows ]
           - [ Server, server, windows ]
           - [ Server, server, linux   ]
     name: ${{ matrix.builds[0] }}${{ matrix.builds[2] == 'linux' && ' (Linux)' || '' }}

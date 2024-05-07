@@ -1,11 +1,19 @@
+if [[$PROGRAM = 'libertym']]; then
+pwsh ./fxd.ps1 get-chrome-x86
+else
 pwsh ./fxd.ps1 get-chrome
+fi
 ./prebuild.cmd
 
 pwsh ./fxd.ps1 gen -game $PROGRAM
 
 cd code/build/$PROGRAM/$([[ $PROGRAM = server ]] && echo windows || echo '')
 
+if [[$PROGRAM = 'libertym']]; then
+"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -p:RestorePackagesConfig=true -p:preferredtoolarchitecture=x86 -p:configuration=release -maxcpucount:4 -v:q -fl1 "-flp1:logfile=errors.log;errorsonly"
+else
 "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MsBuild.exe" CitizenMP.sln -t:build -restore -p:RestorePackagesConfig=true -p:preferredtoolarchitecture=x64 -p:configuration=release -maxcpucount:4 -v:q -fl1 "-flp1:logfile=errors.log;errorsonly"
+fi
 MSBUILD_ERROR=$?
 
 if [[ $MSBUILD_ERROR -eq 0 ]]; then
