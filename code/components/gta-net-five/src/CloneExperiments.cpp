@@ -805,6 +805,32 @@ static void Player31_ClearPlayerInfo(CNetGamePlayer* player)
 #endif
 }
 
+// RAII-style mechanism for ensuring player31 has the correct fields populated
+// to ensure events may properly function.
+class Player31_InfoGuard
+{
+private:
+	CNetGamePlayer* m_player;
+
+public:
+	Player31_InfoGuard(CNetGamePlayer* player)
+		: m_player(player)
+	{
+		if (m_player == g_player31)
+		{
+			Player31_ApplyPlayerInfo(m_player);
+		}
+	}
+
+	~Player31_InfoGuard()
+	{
+		if (m_player == g_player31)
+		{
+			Player31_ClearPlayerInfo(m_player);
+		}
+	}
+};
+
 #include <minhook.h>
 
 static void(*g_origPassObjectControl)(CNetGamePlayer* player, rage::netObject* netObject, int a3);
@@ -1568,11 +1594,14 @@ static CScenarioInfo* GetTaskScenarioInfo(void* task)
 	if (!scenario && *(uint64_t*)task == (uint64_t)g_taskUseScenarioVtable)
 	{
 		auto scenarioInfoMgr = *g_scenarioInfoManager;
+
+#if _DEBUG
 		auto pointId = (*(uint32_t(__fastcall**)(void*))(*(uint64_t*)task + g_pointIdGetterVtableOffset))(task);
 
 		trace("Failed to get scenario info by id %d for task (address %p, vtable %p). Loaded %d and %d scenario infos.\n",
 			pointId, (void*)hook::get_unadjusted(task), (void*)hook::get_unadjusted(*(void**)task),
 			scenarioInfoMgr->m_scenarioInfos.GetCount(), scenarioInfoMgr->m_scenarioUnks.GetCount());
+#endif
 
 		// Try to avoid crash by returning first scenario from the array.
 		return scenarioInfoMgr->m_scenarioInfos[0];
@@ -2403,9 +2432,75 @@ static HookFunction hookFunction([]()
 // event stuff
 static void* g_netEventMgr;
 
+static std::unordered_set<uint16_t> g_eventBlacklist;
 #ifdef IS_RDR3
-static std::map<uint16_t, const char*> g_eventNames;
+static std::unordered_map<uint16_t, const char*> g_eventNames;
 #endif
+
+#ifdef GTA_FIVE
+static hook::cdecl_stub<const char*(void*, uint16_t)> _netEventMgr_GetNameFromType([]()
+{
+	return hook::get_pattern("66 83 FA ? 73 12 0F B7 D2 48 8B 8C D1 ? ? ? ? 48 85 C9", -7);
+});
+#endif
+
+// #TODO: Once file is reorganized dump into netEventMgr as utility functions
+static uint16_t netEventMgr_GetMaxEventType()
+{
+#ifdef GTA_FIVE
+	return (xbr::IsGameBuildOrGreater<2060>() ? 0x5B : 0x5A);
+#elif IS_RDR3
+	return 0xA5;
+#endif
+}
+
+static void netEventMgr_PopulateEventBlacklist()
+{
+	std::unordered_map<std::string_view, uint16_t> eventIdents;
+	auto BlacklistEvent = [&](const char* name)
+	{
+		if (auto it = eventIdents.find(name); it != eventIdents.end())
+		{
+			g_eventBlacklist.emplace(it->second);
+		}
+	};
+
+#ifdef GTA_FIVE
+	auto eventMgr = *(char**)g_netEventMgr;
+	for (uint16_t i = 0; i < netEventMgr_GetMaxEventType(); ++i)
+	{
+		if (auto name = _netEventMgr_GetNameFromType(eventMgr, i))
+		{
+			eventIdents.insert({ name, i });
+		}
+	}
+#elif IS_RDR3
+	for (auto [type, name] : g_eventNames)
+	{
+		eventIdents.insert({ name, type });
+	}
+#endif
+
+	BlacklistEvent("GIVE_CONTROL_EVENT"); // don't give control using events!
+	BlacklistEvent("BLOW_UP_VEHICLE_EVENT"); // used only during migration
+	BlacklistEvent("KICK_VOTES_EVENT");
+	BlacklistEvent("NETWORK_CRC_HASH_CHECK_EVENT");
+	BlacklistEvent("NETWORK_CHECK_EXE_SIZE_EVENT");
+	BlacklistEvent("NETWORK_CHECK_CODE_CRCS_EVENT");
+	BlacklistEvent("NETWORK_CHECK_CATALOG_CRC");
+}
+
+/// Ignore processing events that do not apply to OneSyncEnabled.
+///
+/// If the event implements a Reply method, or is exposed via script command,
+/// ensure blacklisting it will not negatively impact the game or network state.
+static bool netEventMgr_IsBlacklistedEvent(uint16_t type)
+{
+	static std::once_flag generated;
+	std::call_once(generated, netEventMgr_PopulateEventBlacklist);
+
+	return g_eventBlacklist.find(type) != g_eventBlacklist.end();
+}
 
 namespace rage
 {
@@ -2739,8 +2834,7 @@ static void EventMgr_AddEvent(void* eventMgr, rage::netGameEvent* ev)
 		return g_origAddEvent(eventMgr, ev);
 	}
 
-	// don't give control using events!
-	if (strcmp(ev->GetName(), "GIVE_CONTROL_EVENT") == 0)
+	if (netEventMgr_IsBlacklistedEvent(ev->eventId))
 	{
 		delete ev;
 		return;
@@ -3053,17 +3147,12 @@ static void HandleNetGameEvent(const char* idata, size_t len)
 	rage::datBitBuffer rlBuffer(const_cast<uint8_t*>(data.data()), data.size());
 	rlBuffer.m_f1C = 1;
 
-#ifdef GTA_FIVE
-	static auto maxEvent = (xbr::IsGameBuildOrGreater<2060>() ? 0x5B : 0x5A);
-#elif IS_RDR3
-	static auto maxEvent = 0xA5;
-#endif
-
-	if (eventType > maxEvent)
+	if (eventType > netEventMgr_GetMaxEventType())
 	{
 		return;
 	}
 
+	Player31_InfoGuard infoGuard{ player };
 	if (isReply)
 	{
 		auto evSetIt = g_events.find({ eventType, eventHeader });
@@ -3074,8 +3163,6 @@ static void HandleNetGameEvent(const char* idata, size_t len)
 
 			if (ev)
 			{
-				Player31_ApplyPlayerInfo(g_player31);
-
 				ev->HandleReply(&rlBuffer, player);
 
 #ifdef GTA_FIVE
@@ -3091,14 +3178,17 @@ static void HandleNetGameEvent(const char* idata, size_t len)
 
 				delete ev;
 				g_events.erase({ eventType, eventHeader });
-
-				Player31_ClearPlayerInfo(g_player31);
 			}
 		}
 	}
 	else
 	{
 		using TEventHandlerFn = void(*)(rage::datBitBuffer* buffer, CNetGamePlayer* player, CNetGamePlayer* unkConn, uint16_t, uint32_t, uint32_t);
+		if (netEventMgr_IsBlacklistedEvent(eventType))
+		{
+			//trace("Rejecting Blacklisted Event: %d\n", eventType);
+			return;
+		}
 
 		bool rejected = false;
 
@@ -3874,56 +3964,33 @@ bool DoesLocalPlayerOwnWorldGrid(float* pos)
 
 	// #TODO1S: make server able to send current range for player (and a world grid granularity?)
 	constexpr float maxRange = (424.0f * 424.0f);
+	
+	int sectorX = std::max(pos[0] + 8192.0f, 0.0f) / 150;
+	int sectorY = std::max(pos[1] + 8192.0f, 0.0f) / 150;
 
-	if (icgi->NetProtoVersion < 0x202007021121)
+	auto playerIdx = g_netIdsByPlayer[GetLocalPlayer()];
+
+	bool does = false;
+
+	for (const auto& entry : g_worldGrid2[0].entries)
 	{
-		int sectorX = std::max(pos[0] + 8192.0f, 0.0f) / 75;
-		int sectorY = std::max(pos[1] + 8192.0f, 0.0f) / 75;
-
-		auto playerIdx = GetLocalPlayer()->physicalPlayerIndex();
-
-		bool does = false;
-
-		for (const auto& entry : g_worldGrid[playerIdx].entries)
+		if (entry.sectorX == sectorX && entry.sectorY == sectorY && entry.slotID == playerIdx)
 		{
-			if (entry.sectorX == sectorX && entry.sectorY == sectorY && entry.slotID == playerIdx)
-			{
-				does = true;
-				break;
-			}
+			does = true;
+			break;
 		}
-
-		return does;
 	}
-	else
+
+	// if the entity would be created outside of culling range, suppress it
+	if (((dX * dX) + (dY * dY)) > maxRange)
 	{
-		int sectorX = std::max(pos[0] + 8192.0f, 0.0f) / 150;
-		int sectorY = std::max(pos[1] + 8192.0f, 0.0f) / 150;
-
-		auto playerIdx = g_netIdsByPlayer[GetLocalPlayer()];
-
-		bool does = false;
-
-		for (const auto& entry : g_worldGrid2[0].entries)
+		if (does)
 		{
-			if (entry.sectorX == sectorX && entry.sectorY == sectorY && entry.slotID == playerIdx)
-			{
-				does = true;
-				break;
-			}
+			does = false;
 		}
-
-		// if the entity would be created outside of culling range, suppress it
-		if (((dX * dX) + (dY * dY)) > maxRange)
-		{
-			if (does)
-			{
-				does = false;
-			}
-		}
-
-		return does;
 	}
+
+	return does;
 }
 
 static int GetScriptParticipantIndexForPlayer(CNetGamePlayer* player)

@@ -1243,229 +1243,6 @@ namespace fx
 			}
 		};
 
-		struct GetInfoOOB
-		{
-			inline void Process(const fwRefContainer<fx::GameServer>& server, const net::PeerAddress& from, const std::string_view& data) const
-			{
-				auto limiter = server->GetInstance()->GetComponent<fx::PeerAddressRateLimiterStore>()->GetRateLimiter("getinfo", fx::RateLimiterDefaults{ 2.0, 10.0 });
-
-				if (!fx::IsProxyAddress(from) && !limiter->Consume(from))
-				{
-					return;
-				}
-
-				int numClients = 0;
-
-				server->GetInstance()->GetComponent<fx::ClientRegistry>()->ForAllClients([&](const fx::ClientSharedPtr& client)
-				{
-					if (client->GetNetId() < 0xFFFF)
-					{
-						++numClients;
-					}
-				});
-
-				server->SendOutOfBand(from, fmt::format(
-					"infoResponse\n"
-					"\\sv_maxclients\\{6}\\clients\\{4}\\challenge\\{0}\\gamename\\CitizenFX\\protocol\\4\\hostname\\{1}\\gametype\\{2}\\mapname\\{3}\\iv\\{5}",
-					std::string(data.substr(0, data.find_first_of(" \n"))),
-					server->GetVariable("sv_hostname"),
-					server->GetVariable("gametype"),
-					server->GetVariable("mapname"),
-					numClients,
-					server->GetVariable("sv_infoVersion"),
-					server->GetVariable("sv_maxclients")
-				));
-			}
-
-			inline const char* GetName() const
-			{
-				return "getinfo";
-			}
-		};
-
-		struct GetStatusOOB
-		{
-			inline void Process(const fwRefContainer<fx::GameServer>& server, const net::PeerAddress& from, const std::string_view& data) const
-			{
-				auto limiter = server->GetInstance()->GetComponent<fx::PeerAddressRateLimiterStore>()->GetRateLimiter("getstatus", fx::RateLimiterDefaults{ 1.0, 5.0 });
-
-				if (!fx::IsProxyAddress(from) && !limiter->Consume(from))
-				{
-					return;
-				}
-
-				int numClients = 0;
-				std::stringstream clientList;
-
-				server->GetInstance()->GetComponent<fx::ClientRegistry>()->ForAllClients([&](const fx::ClientSharedPtr& client)
-				{
-					if (client->GetNetId() < 0xFFFF)
-					{
-						clientList << fmt::sprintf("%d %d \"%s\"\n", 0, 0, client->GetName());
-
-						++numClients;
-					}
-				});
-
-				std::stringstream infoVars;
-
-				auto addInfo = [&](const std::string& key, const std::string& value)
-				{
-					infoVars << "\\" << key << "\\" << value;
-				};
-
-				addInfo("sv_maxclients", "24");
-				addInfo("clients", std::to_string(numClients));
-
-				server->GetInstance()->GetComponent<console::Context>()->GetVariableManager()->ForAllVariables([&](const std::string& name, int flags, const std::shared_ptr<internal::ConsoleVariableEntryBase>& var)
-				{
-					addInfo(name, var->GetValue());
-				}, ConVar_ServerInfo);
-
-				server->SendOutOfBand(from, fmt::format(
-					"statusResponse\n"
-					"{0}\n"
-					"{1}",
-					infoVars.str(),
-					clientList.str()
-				));
-			}
-
-			inline const char* GetName() const
-			{
-				return "getstatus";
-			}
-		};
-
-		struct RconOOB
-		{
-			void Process(const fwRefContainer<fx::GameServer>& server, const net::PeerAddress& from, const std::string_view& dataView) const
-			{
-				auto limiter = server->GetInstance()->GetComponent<fx::PeerAddressRateLimiterStore>()->GetRateLimiter("rcon", fx::RateLimiterDefaults{ 0.2, 5.0 });
-
-				if (!fx::IsProxyAddress(from) && !limiter->Consume(from))
-				{
-					return;
-				}
-
-				std::string data(dataView);
-
-				gscomms_execute_callback_on_main_thread([=]()
-				{
-					try
-					{
-						int spacePos = data.find_first_of(" \n");
-
-						if (spacePos == std::string::npos)
-						{
-							return;
-						}
-
-						auto password = data.substr(0, spacePos);
-						auto command = data.substr(spacePos);
-
-						auto serverPassword = server->GetRconPassword();
-
-						std::string printString;
-
-						ScopeDestructor destructor([&]()
-						{
-							server->SendOutOfBand(from, "print " + printString);
-						});
-
-						if (serverPassword.empty())
-						{
-							printString += "The server must set rcon_password to be able to use this command.\n";
-							return;
-						}
-
-						if (password != serverPassword)
-						{
-							printString += "Invalid password.\n";
-							return;
-						}
-
-						// log rcon request
-						console::Printf("rcon", "Rcon from %s\n%s\n", from.ToString(), command);
-
-						// reset rate limit for this key
-						limiter->Reset(from);
-
-						PrintListenerContext context([&printString](std::string_view print)
-						{
-							printString += print;
-						});
-
-						fx::PrintFilterContext filterContext([](ConsoleChannel& channel, std::string_view print)
-						{
-							channel = fmt::sprintf("rcon/%s", channel);
-						});
-
-						auto ctx = server->GetInstance()->GetComponent<console::Context>();
-						ctx->ExecuteBuffer();
-
-						se::ScopedPrincipal principalScope(se::Principal{ "system.console" });
-						ctx->AddToBuffer(std::string(command));
-						ctx->ExecuteBuffer();
-					}
-					catch (std::exception& e)
-					{
-
-					}
-				});
-			}
-
-			inline const char* GetName() const
-			{
-				return "rcon";
-			}
-		};
-
-		struct RoutingPacketHandler
-		{
-			inline static void Handle(ServerInstanceBase* instance, const fx::ClientSharedPtr& client, net::Buffer& packet)
-			{
-				uint16_t targetNetId = packet.Read<uint16_t>();
-				uint16_t packetLength = packet.Read<uint16_t>();
-
-				std::vector<uint8_t> packetData(packetLength);
-				if (packet.Read(packetData.data(), packetData.size()))
-				{
-					if (targetNetId == 0xFFFF)
-					{
-						client->SetHasRouted();
-
-						gscomms_execute_callback_on_sync_thread([instance, client, packetData]()
-						{
-							instance->GetComponent<fx::ServerGameStatePublic>()->ParseGameStatePacket(client, packetData);
-						});
-
-						return;
-					}
-
-					auto targetClient = instance->GetComponent<fx::ClientRegistry>()->GetClientByNetID(targetNetId);
-
-					if (targetClient)
-					{
-						net::Buffer outPacket;
-						outPacket.Write(0xE938445B);
-						outPacket.Write<uint16_t>(client->GetNetId());
-						outPacket.Write(packetLength);
-						outPacket.Write(packetData.data(), packetLength);
-
-						targetClient->SendPacket(1, outPacket, NetPacketType_Unreliable);
-
-						client->SetHasRouted();
-					}
-				}
-			}
-
-			inline static constexpr const char* GetPacketId()
-			{
-				return "msgRoute";
-			}
-		};
-
 		struct IHostPacketHandler
 		{
 			inline static void Handle(ServerInstanceBase* instance, const fx::ClientSharedPtr& client, net::Buffer& packet)
@@ -1634,6 +1411,12 @@ DECLARE_INSTANCE_TYPE(fx::ServerDecorators::HostVoteCount);
 #include <decorators/WithProcessTick.h>
 #include <decorators/WithPacketHandler.h>
 
+#include <outofbandhandlers/GetInfoOutOfBand.h>
+#include <outofbandhandlers/GetStatusOutOfBand.h>
+#include <outofbandhandlers/RconOutOfBand.h>
+
+#include <packethandlers/RoutingPacketHandler.h>
+
 DLL_EXPORT void gscomms_execute_callback_on_main_thread(const std::function<void()>& fn, bool force)
 {
 	if (!g_gameServer)
@@ -1696,7 +1479,7 @@ static InitFunction initFunction([]()
 		instance->SetComponent(
 			WithPacketHandler<RoutingPacketHandler, IHostPacketHandler, IQuitPacketHandler, HeHostPacketHandler>(
 				WithProcessTick<ThreadWait, GameServerTick>(
-					WithOutOfBand<GetInfoOOB, GetStatusOOB, RconOOB>(
+					WithOutOfBand<GetInfoOutOfBand, GetStatusOutOfBand, RconOutOfBand>(
 						WithEndPoints(
 							NewGameServer()
 						)
