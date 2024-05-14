@@ -312,17 +312,17 @@ static InitFunction initFunction([]()
 		// for example: sv_endpoints "123.123.123.123 124.124.124.124"
 		auto srvEndpoints = instance->AddVariable<std::string>("sv_endpoints", ConVar_None, "");
 		auto lanVar = instance->AddVariable<bool>("sv_lan", ConVar_ServerInfo, false);
-
-		g_enforcedGameBuild = "1604";
-		auto enforceGameBuildVar = instance->AddVariable<fx::GameBuild>("sv_enforceGameBuild", ConVar_ReadOnly | ConVar_ServerInfo, "1604", &g_enforcedGameBuild);
+		// jank solution to allow game to join during testing
+		g_enforcedGameBuild = "59";
+		auto enforceGameBuildVar = instance->AddVariable<fx::GameBuild>("sv_enforceGameBuild", ConVar_ReadOnly | ConVar_ServerInfo, "59", &g_enforcedGameBuild);
 
 		instance->GetComponent<fx::GameServer>()->OnTick.Connect([instance, enforceGameBuildVar]()
 		{
 			if (instance->GetComponent<fx::GameServer>()->GetGameName() == fx::GameName::RDR3)
 			{
-				if (g_enforcedGameBuild == "1604")
+				if (g_enforcedGameBuild == "59")
 				{
-					enforceGameBuildVar->GetHelper()->SetRawValue("1311");
+					enforceGameBuildVar->GetHelper()->SetRawValue("59");
 				}
 			}
 

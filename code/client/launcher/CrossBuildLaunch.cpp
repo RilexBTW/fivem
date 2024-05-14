@@ -14,7 +14,7 @@ void XBR_EarlySelect()
 #elif defined(IS_RDR3)
 		1311
 #elif defined(GTA_NY)
-		43
+		59 
 #else
 		0
 #endif
@@ -28,6 +28,8 @@ void XBR_EarlySelect()
 	initialBuild = 2699;
 #elif defined(IS_RDR3)
 	initialBuild = 1491;
+#elif defined(IS_GTA_NY)
+	initialBuild = 59;
 #endif
 #endif
 

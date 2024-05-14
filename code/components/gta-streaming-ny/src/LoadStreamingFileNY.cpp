@@ -1,8 +1,8 @@
 #include <StdInc.h>
 #include <Hooking.h>
-
+#include <type_traits>
 #include <Streaming.h>
-
+#include <Error.h>
 #include <ICoreGameInit.h>
 #include <nutsnbolts.h>
 #include <MinHook.h>
@@ -11,6 +11,31 @@ static std::vector<std::tuple<std::string, std::string, rage::ResourceFlags>> g_
 std::set<std::string> g_customStreamingFileRefs;
 static std::map<std::string, std::vector<std::string>, std::less<>> g_customStreamingFilesByTag;
 static bool g_reloadStreamingFiles;
+
+
+
+static int SehRoutine(const char* whatPtr, PEXCEPTION_POINTERS exception)
+{
+	if (IsErrorException(exception))
+	{
+		return EXCEPTION_CONTINUE_SEARCH;
+	}
+
+	if (exception->ExceptionRecord->ExceptionCode & 0x80000000)
+	{
+		if (!whatPtr)
+		{
+			whatPtr = "a safe-call operation";
+		}
+
+		FatalErrorNoExcept("An exception occurred (%08x at %p) during %s. The game will be terminated.",
+			exception->ExceptionRecord->ExceptionCode, exception->ExceptionRecord->ExceptionAddress,
+			whatPtr);
+	}
+
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
 
 void DLL_EXPORT CfxCollection_AddStreamingFileByTag(const std::string& tag, const std::string& fileName, rage::ResourceFlags flags)
 {
